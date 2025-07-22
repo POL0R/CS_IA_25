@@ -1,0 +1,134 @@
+/* Orders Page Styles */
+.orders-container {
+  min-height: 100vh;
+  background: #111;
+  padding: 32px;
+  color: #fff;
+}
+.orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  background: #181818;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #222;
+  box-shadow: 0 2px 8px #000a;
+}
+.orders-header h1 {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+}
+.orders-header .header-actions {
+  display: flex;
+  gap: 12px;
+}
+.action-btn {
+  background: #181818;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.action-btn:hover {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+}
+.orders-table-container {
+  background: #181818;
+  border-radius: 16px;
+  border: 1px solid #222;
+  box-shadow: 0 8px 32px #000a;
+  overflow: hidden;
+  margin-top: 24px;
+}
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.orders-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  border-bottom: 1px solid #222;
+  background: #222;
+}
+.orders-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #222;
+  color: #fff;
+}
+.order-row:hover {
+  background: #222;
+}
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #222;
+  color: #fff;
+}
+.status-badge.completed {
+  background: #fff;
+  color: #111;
+}
+.status-badge.pending {
+  background: #bbb;
+  color: #111;
+}
+.status-badge.cancelled {
+  background: #181818;
+  color: #bbb;
+}
+.order-actions {
+  display: flex;
+  gap: 8px;
+}
+.order-btn {
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.order-btn:hover {
+  background: #bbb;
+  color: #111;
+}
+@media (max-width: 900px) {
+  .orders-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .orders-table th, .orders-table td {
+    padding: 10px 6px;
+  }
+}
+@media (max-width: 600px) {
+  .orders-container {
+    padding: 8px;
+  }
+  .orders-header {
+    padding: 12px;
+  }
+  .orders-table-container {
+    border-radius: 8px;
+  }
+} 

@@ -1,0 +1,344 @@
+.materials-catalogue {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #111;
+  min-height: 100vh;
+}
+.catalogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 24px;
+}
+.header-left {
+  flex: 1;
+}
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.add-material-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #181818;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s, color 0.2s, border 0.2s;
+  box-shadow: 0 2px 8px #000a;
+}
+.add-material-btn:hover {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px #000c;
+}
+.add-material-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #fff;
+}
+.catalogue-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.catalogue-header p {
+  font-size: 16px;
+  color: #bbb;
+}
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.material-card {
+  background: #181818;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #000a;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #222;
+}
+.material-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px #000c;
+  border-color: #fff;
+}
+.material-image {
+  height: 200px;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.material-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.1) contrast(1.1);
+}
+.material-info {
+  padding: 20px;
+}
+.material-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.material-sku {
+  font-size: 14px;
+  color: #bbb;
+  margin-bottom: 4px;
+}
+.material-category {
+  font-size: 14px;
+  color: #bbb;
+  font-weight: 500;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+.material-cost {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+}
+.material-stock {
+  margin-bottom: 12px;
+}
+.stock-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 8px;
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+}
+.stock-status.low {
+  background: #333;
+  color: #fff;
+  border-color: #fff;
+}
+.stock-status.medium {
+  background: #181818;
+  color: #fff;
+  border-color: #fff;
+}
+.stock-status.normal {
+  background: #111;
+  color: #fff;
+  border-color: #fff;
+}
+.stock-quantity {
+  font-size: 14px;
+  color: #bbb;
+}
+.material-supplier {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.supplier-label {
+  font-weight: 600;
+  color: #bbb;
+  margin-right: 4px;
+}
+.supplier-name {
+  color: #fff;
+  font-weight: 500;
+}
+.supplier-company {
+  color: #888;
+  font-size: 12px;
+  margin-left: 4px;
+}
+.material-delivery {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.delivery-label {
+  font-weight: 600;
+  color: #bbb;
+  margin-right: 4px;
+}
+.delivery-time {
+  color: #fff;
+}
+.delivery-distance {
+  color: #bbb;
+}
+.material-performance {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.performance-label {
+  font-weight: 600;
+  color: #bbb;
+  margin-right: 4px;
+}
+.performance-time {
+  color: #fff;
+}
+.performance-orders {
+  color: #bbb;
+}
+.material-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.action-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s, color 0.2s;
+}
+.action-btn:hover {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+}
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #181818;
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px #000c;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #222;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.modal-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+.close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: #bbb;
+}
+.close-btn svg {
+  width: 24px;
+  height: 24px;
+}
+.modal-body {
+  margin-bottom: 24px;
+}
+.material-details-modal {
+  background: #181818;
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px #000c;
+  padding: 36px 32px;
+  border: 1px solid #222;
+}
+.edit-material-modal {
+  background: #181818;
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px #000c;
+  padding: 36px 32px;
+  border: 1px solid #222;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.modal-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.modal-btn.primary {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+}
+.modal-btn.primary:hover {
+  background: #bbb;
+  color: #111;
+}
+.modal-btn.secondary {
+  background: #181818;
+  color: #fff;
+  border-color: #fff;
+}
+.modal-btn.secondary:hover {
+  background: #222;
+  color: #fff;
+}
+.modal-btn:disabled {
+  background: #333;
+  color: #888;
+  border-color: #333;
+  cursor: not-allowed;
+}
+@media (max-width: 900px) {
+  .catalogue-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+@media (max-width: 600px) {
+  .materials-catalogue {
+    padding: 8px;
+  }
+  .catalogue-header {
+    padding: 12px;
+  }
+} 

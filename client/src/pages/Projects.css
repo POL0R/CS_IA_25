@@ -1,0 +1,270 @@
+/* Main wrapper and grid */
+.projects-wrapper {
+  min-height: 100vh;
+  background: #111;
+  padding: 40px 8px;
+}
+.projects-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.projects-header {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+@media (min-width: 640px) {
+  .projects-header {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+.projects-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 8px #0004;
+}
+.projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+@media (min-width: 640px) {
+  .projects-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.project-card {
+  background: #181818;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px #000a;
+  border: 1px solid #222;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+  transition: box-shadow 0.2s, transform 0.2s, border 0.2s;
+}
+/* Add purple gradient for hover/active states */
+.project-card:hover {
+  box-shadow: 0 8px 32px #000c, 0 0 0 3px #a78bfa80;
+  border-color: transparent;
+  background: linear-gradient(90deg, #181818 90%, #a78bfa22 100%);
+}
+.project-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.project-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+.project-card-statuses {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+.project-card-desc {
+  color: #bbb;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  min-height: 2.5em;
+}
+.project-card-info {
+  margin-bottom: 16px;
+}
+.project-card-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #bbb;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.project-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #bbb;
+  font-size: 0.92rem;
+  margin-bottom: 12px;
+}
+.project-card-btn {
+  width: 100%;
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  margin-top: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #0006;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.project-card-btn:hover {
+  background: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+  color: #fff;
+}
+/* Status and priority badges */
+.badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+}
+.badge-status-planning { background: #181818; color: #fff; border-color: #fff; }
+.badge-status-active { background: #222; color: #fff; border-color: #fff; }
+.badge-status-on_hold { background: #333; color: #fff; border-color: #fff; }
+.badge-status-completed { background: #fff; color: #111; border-color: #fff; }
+.badge-status-cancelled { background: #111; color: #fff; border-color: #fff; }
+.badge-status-incoming { background: #181818; color: #fff; border-color: #fff; }
+.badge-status-processing { background: #222; color: #fff; border-color: #fff; }
+.badge-status-transit { background: #333; color: #fff; border-color: #fff; }
+.badge-status-delivered { background: #fff; color: #111; border-color: #fff; }
+.badge-priority-low { background: #181818; color: #fff; border-color: #fff; }
+.badge-priority-medium { background: #222; color: #fff; border-color: #fff; }
+.badge-priority-high { background: #333; color: #fff; border-color: #fff; }
+.badge-priority-urgent { background: #fff; color: #111; border-color: #fff; }
+.badge-status-completed, .badge-status-delivered, .badge-priority-urgent {
+  background: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+  color: #fff;
+  border-color: #a78bfa;
+}
+/* Modal overlay and form */
+.projects-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.projects-modal {
+  background: #181818;
+  color: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #000c;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #222;
+}
+.projects-modal-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 24px;
+}
+.projects-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.projects-form label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.projects-form input,
+.projects-form textarea,
+.projects-form select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #fff;
+  background: #181818;
+  margin-bottom: 8px;
+  transition: border 0.2s, background 0.2s;
+}
+.projects-form input:focus,
+.projects-form textarea:focus,
+.projects-form select:focus {
+  border: 1.5px solid #fff;
+  outline: none;
+  background: #222;
+}
+.projects-form-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.projects-form-btn-primary {
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.projects-form-btn-primary:hover {
+  background: #bbb;
+  color: #111;
+}
+.projects-form-btn-secondary {
+  background: #181818;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.projects-form-btn-secondary:hover {
+  background: #222;
+  color: #fff;
+  border-color: #fff;
+}
+.projects-status-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.status-tab {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #181818;
+  color: #fff;
+  border: 1px solid #333;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.status-tab.active, .status-tab:hover {
+  background: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+  color: #fff;
+  border-color: #a78bfa;
+} 

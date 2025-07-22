@@ -1,0 +1,43 @@
+.project-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #222;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 2px 8px #000a;
+  margin-bottom: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.project-icon:hover {
+  background: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+  color: #fff;
+  box-shadow: 0 2px 12px #a78bfa80, 0 2px 8px #000a;
+}
+.project-icon:focus, .project-icon:active {
+  outline: none;
+  box-shadow: 0 0 0 3px #a78bfa80, 0 2px 8px #000a;
+}
+.project-icon-label {
+  color: #bbb;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 4px;
+}
+.icon-main {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.icon-info {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+} 
