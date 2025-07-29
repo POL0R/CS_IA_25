@@ -17,6 +17,15 @@ export default function Settings() {
   const [skills, setSkills] = useState([]);
   const [editingSkill, setEditingSkill] = useState(null);
   const [showSkillModal, setShowSkillModal] = useState(false);
+  const [features, setFeatures] = useState([]);
+  const [complianceTags, setComplianceTags] = useState([]);
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
+  const [editingFeature, setEditingFeature] = useState(null);
+  const [showComplianceModal, setShowComplianceModal] = useState(false);
+  const [editingCompliance, setEditingCompliance] = useState(null);
+  const [applicationTags, setApplicationTags] = useState([]);
+  const [showApplicationTagModal, setShowApplicationTagModal] = useState(false);
+  const [editingApplicationTag, setEditingApplicationTag] = useState(null);
 
   // Fetch users from backend
   const fetchUsers = () => {
@@ -48,11 +57,34 @@ export default function Settings() {
       .catch(() => setSkills([]));
   };
 
+  const fetchFeatures = () => {
+    fetch('http://localhost:5001/features')
+      .then(res => res.json())
+      .then(data => setFeatures(data))
+      .catch(() => setFeatures([]));
+  };
+  const fetchComplianceTags = () => {
+    fetch('http://localhost:5001/compliance_tags')
+      .then(res => res.json())
+      .then(data => setComplianceTags(data))
+      .catch(() => setComplianceTags([]));
+  };
+  
+  const fetchApplicationTags = () => {
+    fetch('http://localhost:5001/application-tags')
+      .then(res => res.json())
+      .then(data => setApplicationTags(data))
+      .catch(() => setApplicationTags([]));
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchAuditLogs();
     fetchWarehouses();
     fetchSkills();
+    fetchFeatures();
+    fetchComplianceTags();
+    fetchApplicationTags();
   }, []);
 
   const handleAddUser = (userData) => {
@@ -164,6 +196,148 @@ export default function Settings() {
         })
         .then(() => fetchSkills())
         .catch(() => alert("Failed to delete skill."));
+    }
+  };
+
+  const handleAddFeature = (featureData) => {
+    fetch('http://localhost:5001/features', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(featureData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to add feature');
+        return res.json();
+      })
+      .then(() => {
+        fetchFeatures();
+        setShowFeatureModal(false);
+      })
+      .catch(() => alert('Failed to add feature. Name may already exist.'));
+  };
+  const handleEditFeature = (featureData) => {
+    fetch(`http://localhost:5001/features/${editingFeature.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(featureData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to update feature');
+        return res.json();
+      })
+      .then(() => {
+        fetchFeatures();
+        setEditingFeature(null);
+        setShowFeatureModal(false);
+      })
+      .catch(() => alert('Failed to update feature.'));
+  };
+  const handleDeleteFeature = (id) => {
+    if (window.confirm('Are you sure you want to delete this feature?')) {
+      fetch(`http://localhost:5001/features/${id}`, {
+        method: 'DELETE'
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to delete feature');
+          return res.json();
+        })
+        .then(() => fetchFeatures())
+        .catch(() => alert('Failed to delete feature.'));
+    }
+  };
+  const handleAddCompliance = (tagData) => {
+    fetch('http://localhost:5001/compliance_tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tagData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to add compliance tag');
+        return res.json();
+      })
+      .then(() => {
+        fetchComplianceTags();
+        setShowComplianceModal(false);
+      })
+      .catch(() => alert('Failed to add compliance tag. Name may already exist.'));
+  };
+  const handleEditCompliance = (tagData) => {
+    fetch(`http://localhost:5001/compliance_tags/${editingCompliance.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tagData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to update compliance tag');
+        return res.json();
+      })
+      .then(() => {
+        fetchComplianceTags();
+        setEditingCompliance(null);
+        setShowComplianceModal(false);
+      })
+      .catch(() => alert('Failed to update compliance tag.'));
+  };
+  const handleDeleteCompliance = (id) => {
+    if (window.confirm('Are you sure you want to delete this compliance tag?')) {
+      fetch(`http://localhost:5001/compliance_tags/${id}`, {
+        method: 'DELETE'
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to delete compliance tag');
+          return res.json();
+        })
+        .then(() => fetchComplianceTags())
+        .catch(() => alert('Failed to delete compliance tag.'));
+    }
+  };
+
+  const handleAddApplicationTag = (tagData) => {
+    fetch("http://localhost:5001/application-tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tagData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to add application tag");
+        return res.json();
+      })
+      .then(() => {
+        fetchApplicationTags();
+        setShowApplicationTagModal(false);
+      })
+      .catch(() => alert("Failed to add application tag. Tag name may already exist."));
+  };
+
+  const handleEditApplicationTag = (tagData) => {
+    fetch(`http://localhost:5001/application-tags/${editingApplicationTag.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tagData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to update application tag");
+        return res.json();
+      })
+      .then(() => {
+        fetchApplicationTags();
+        setEditingApplicationTag(null);
+        setShowApplicationTagModal(false);
+      })
+      .catch(() => alert("Failed to update application tag."));
+  };
+
+  const handleDeleteApplicationTag = (id) => {
+    if (window.confirm("Are you sure you want to delete this application tag?")) {
+      fetch(`http://localhost:5001/application-tags/${id}`, {
+        method: "DELETE"
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to delete application tag");
+          return res.json();
+        })
+        .then(() => fetchApplicationTags())
+        .catch(() => alert("Failed to delete application tag."));
     }
   };
 
@@ -372,6 +546,197 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      {/* Features Section */}
+      <div className="features-section">
+        <div className="section-header">
+          <h2>Features Management</h2>
+          <button className="add-feature-btn" onClick={() => setShowFeatureModal(true)}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add Feature
+          </button>
+        </div>
+        <div className="features-table-container">
+          <table className="features-table">
+            <thead>
+              <tr>
+                <th>Feature Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {features.map(feature => (
+                <tr key={feature.id}>
+                  <td>{feature.name}</td>
+                  <td>
+                    <button className="action-btn edit" onClick={() => { setEditingFeature(feature); setShowFeatureModal(true); }}>
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                    </button>
+                    <button className="action-btn delete" onClick={() => handleDeleteFeature(feature.id)}>
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showFeatureModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>{editingFeature ? 'Edit Feature' : 'Add New Feature'}</h2>
+              <button className="close-btn" onClick={() => { setShowFeatureModal(false); setEditingFeature(null); }}>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <SkillForm
+              skill={editingFeature}
+              onSubmit={editingFeature ? handleEditFeature : handleAddFeature}
+              onCancel={() => { setShowFeatureModal(false); setEditingFeature(null); }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Compliance Tags Section */}
+      <div className="compliance-section">
+        <div className="section-header">
+          <h2>Compliance Tags Management</h2>
+          <button className="add-compliance-btn" onClick={() => setShowComplianceModal(true)}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add Compliance Tag
+          </button>
+        </div>
+        <div className="compliance-table-container">
+          <table className="compliance-table">
+            <thead>
+              <tr>
+                <th>Compliance Tag</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {complianceTags.map(tag => (
+                <tr key={tag.id}>
+                  <td>{tag.name}</td>
+                  <td>
+                    <button className="action-btn edit" onClick={() => { setEditingCompliance(tag); setShowComplianceModal(true); }}>
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                    </button>
+                    <button className="action-btn delete" onClick={() => handleDeleteCompliance(tag.id)}>
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showComplianceModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>{editingCompliance ? 'Edit Compliance Tag' : 'Add New Compliance Tag'}</h2>
+              <button className="close-btn" onClick={() => { setShowComplianceModal(false); setEditingCompliance(null); }}>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <SkillForm
+              skill={editingCompliance}
+              onSubmit={editingCompliance ? handleEditCompliance : handleAddCompliance}
+              onCancel={() => { setShowComplianceModal(false); setEditingCompliance(null); }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Application Tags Section */}
+      <div className="application-tags-section">
+        <div className="section-header">
+          <h2>Application Tags Management</h2>
+          <button className="add-application-tag-btn" onClick={() => setShowApplicationTagModal(true)}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add Application Tag
+          </button>
+        </div>
+        <div className="application-tags-table-container">
+          <table className="application-tags-table">
+            <thead>
+              <tr>
+                <th>Application Tag</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applicationTags && applicationTags.length > 0 ? (
+                applicationTags.map(tag => (
+                  <tr key={tag.id}>
+                    <td>{tag.name}</td>
+                    <td>
+                      <button className="action-btn edit" onClick={() => { setEditingApplicationTag(tag); setShowApplicationTagModal(true); }}>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                      </button>
+                      <button className="action-btn delete" onClick={() => handleDeleteApplicationTag(tag.id)}>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="2" style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
+                    No application tags found. Add your first application tag above.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showApplicationTagModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>{editingApplicationTag ? 'Edit Application Tag' : 'Add New Application Tag'}</h2>
+              <button className="close-btn" onClick={() => { setShowApplicationTagModal(false); setEditingApplicationTag(null); }}>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <ApplicationTagForm
+              tag={editingApplicationTag}
+              onSubmit={editingApplicationTag ? handleEditApplicationTag : handleAddApplicationTag}
+              onCancel={() => { setShowApplicationTagModal(false); setEditingApplicationTag(null); }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -411,6 +776,47 @@ function SkillForm({ skill, onSubmit, onCancel }) {
         </button>
         <button type="submit" className="save-btn">
           {skill ? 'Update Skill' : 'Add Skill'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// Application Tag Form Component
+function ApplicationTagForm({ tag, onSubmit, onCancel }) {
+  const [formData, setFormData] = useState({
+    name: tag?.name || ""
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="skill-form">
+      <div className="form-group">
+        <label>Application Tag Name *</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          placeholder="Enter application tag name"
+        />
+      </div>
+      <div className="form-actions">
+        <button type="button" className="cancel-btn" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="submit" className="save-btn">
+          {tag ? 'Update Application Tag' : 'Add Application Tag'}
         </button>
       </div>
     </form>

@@ -1,6 +1,12 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, UserRole, Product, Customer, Warehouse, Employee, Project, ProjectRequirement, ProjectStatus, Requisition, RequisitionStatus, Supplier, Transaction, Skill, FinishedProduct, FinishedProductSkill, FinishedProductMaterial, ProjectTask, ProjectTaskDependency, ProjectTaskMaterial, CompanyHoliday, Order
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from python_backend.models import Base, User, UserRole, Product, Customer, Warehouse, Employee, Project, ProjectRequirement, ProjectStatus, Requisition, RequisitionStatus, Supplier, Transaction, Skill, FinishedProduct, FinishedProductSkill, FinishedProductMaterial, ProjectTask, ProjectTaskDependency, ProjectTaskMaterial, CompanyHoliday, Order, ApplicationTag
+except ImportError:
+    from models import Base, User, UserRole, Product, Customer, Warehouse, Employee, Project, ProjectRequirement, ProjectStatus, Requisition, RequisitionStatus, Supplier, Transaction, Skill, FinishedProduct, FinishedProductSkill, FinishedProductMaterial, ProjectTask, ProjectTaskDependency, ProjectTaskMaterial, CompanyHoliday, Order, ApplicationTag
 import bcrypt
 from datetime import datetime, timedelta
 import json
@@ -46,6 +52,23 @@ def create_tables():
                 connection.execute(text(f"ALTER TABLE products ADD COLUMN {col} {coltype}"))
             except Exception:
                 pass  # Ignore if column exists
+        # Add new columns to finished_products
+        finished_product_columns = [
+            ("phase_type", "VARCHAR(20)"),
+            ("mount_type", "VARCHAR(20)"),
+            ("compliance_tags", "TEXT"),
+            ("features", "TEXT"),
+            ("application_tags", "TEXT"),
+            ("voltage_rating", "INT"),
+            ("min_load_kw", "INT"),
+            ("max_load_kw", "INT"),
+            ("estimated_hours", "FLOAT")
+        ]
+        for col, coltype in finished_product_columns:
+            try:
+                connection.execute(text(f"ALTER TABLE finished_products ADD COLUMN {col} {coltype}"))
+            except Exception:
+                pass  # Ignore if column exists
         # Orders table
         try:
             connection.execute(text("ALTER TABLE orders ADD COLUMN profit_amount FLOAT"))
@@ -64,6 +87,59 @@ def create_tables():
             FOREIGN KEY (matched_product_id) REFERENCES products(id)
         );
         """))
+        # Create features and compliance_tags tables if not exist
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS features (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) UNIQUE NOT NULL
+        );
+        '''))
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS compliance_tags (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) UNIQUE NOT NULL
+        );
+        '''))
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS application_tags (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) UNIQUE NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        );
+        '''))
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS product_features (
+            product_id INT,
+            feature_id INT,
+            FOREIGN KEY (product_id) REFERENCES products(id),
+            FOREIGN KEY (feature_id) REFERENCES features(id)
+        );
+        '''))
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS product_compliance_tags (
+            product_id INT,
+            compliance_tag_id INT,
+            FOREIGN KEY (product_id) REFERENCES products(id),
+            FOREIGN KEY (compliance_tag_id) REFERENCES compliance_tags(id)
+        );
+        '''))
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS finished_product_features (
+            finished_product_id INT,
+            feature_id INT,
+            FOREIGN KEY (finished_product_id) REFERENCES finished_products(id),
+            FOREIGN KEY (feature_id) REFERENCES features(id)
+        );
+        '''))
+        connection.execute(text('''
+        CREATE TABLE IF NOT EXISTS finished_product_compliance_tags (
+            finished_product_id INT,
+            compliance_tag_id INT,
+            FOREIGN KEY (finished_product_id) REFERENCES finished_products(id),
+            FOREIGN KEY (compliance_tag_id) REFERENCES compliance_tags(id)
+        );
+        '''))
         Base.metadata.drop_all(engine)
         connection.execute(text("SET FOREIGN_KEY_CHECKS=1;"))
         connection.commit()
@@ -160,9 +236,36 @@ def seed_data():
     session.add(employee3)
     session.commit()
     
-    # Add sample products if not exists
+    # Seed application tags
+    application_tags = [
+        'Power Distribution',
+        'Industrial',
+        'Heavy Industry',
+        'Power Transmission',
+        'Automation',
+        'Process Control',
+        'Energy Monitoring',
+        'Data Logging',
+        'Smart Grid',
+        'Power Quality',
+        'Solar Power',
+        'Renewable',
+        'Power Backup',
+        'Critical Loads',
+        'Generator Synchronization',
+        'DG-Solar Switching',
+        'Load Sharing'
+    ]
+    
+    for tag_name in application_tags:
+        if not session.query(ApplicationTag).filter_by(name=tag_name).first():
+            tag = ApplicationTag(name=tag_name)
+            session.add(tag)
+    
+    session.commit()
+    
+    # Add sample products if not exists (MASTER MATERIALS ONLY)
     if not session.query(Product).filter_by(sku='ATS120').first():
-        supplier = session.query(Supplier).first()
         product = Product(
             name='Auto Transfer Switch Panel - 120kW',
             sku='ATS120',
@@ -187,47 +290,27 @@ def seed_data():
             warranty_note='Includes 1-year warranty and on-site support',
             image_url='https://example.com/ats120.jpg',
             reorder_level=2,
-            supplier_id=supplier.id if supplier else None,
+            supplier_id=None,  # MASTER MATERIAL
             conversion_ratio=1.0
         )
         session.add(product)
         session.commit()
-    # Add example order for demo
-    customer = session.query(Customer).first()
-    product = session.query(Product).filter_by(sku='ATS120').first()
-    if customer and product and not session.query(Order).filter_by(order_number='ORD-DEMO-001').first():
-        order = Order(
-            order_number='ORD-DEMO-001',
-            customer_id=customer.id,
-            user_id=1,
-            status='pending',
-            order_date=datetime.now(),
-            delivery_date=datetime.now() + timedelta(days=7),
-            total_amount=131300.0,
-            profit_amount=20000.0,
-            notes='Demo order',
-            created_at=datetime.now(),
-            updated_at=datetime.now()
+    # Add more master materials as needed
+    if not session.query(Product).filter_by(sku='SKU001').first():
+        product = Product(
+            name='High-Performance Laptop',
+            sku='SKU001',
+            category='Electronics',
+            quantity=50,
+            unit='pcs',
+            cost=1200.0,
+            reorder_level=10,
+            supplier_id=None,
+            conversion_ratio=1.0
         )
-        session.add(order)
+        session.add(product)
         session.commit()
-    
     if not session.query(Product).filter_by(sku='SKU002').first():
-        supplier2 = session.query(Supplier).filter_by(name='Piyush Dhumal').first()
-        if not supplier2:
-            supplier2 = Supplier(
-                name='Piyush Dhumal',
-                email='dhumalpiyush08@gmail.com',
-                phone='9860093451',
-                address='FB - 102, Shravandhara\nSasane Nagar, Hadapsar',
-                company='Asian Power',
-                tax_id='TAX23534',
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
-            session.add(supplier2)
-            session.commit()
-        
         product2 = Product(
             name='Office Chair',
             sku='SKU002',
@@ -236,27 +319,12 @@ def seed_data():
             unit='pcs',
             cost=150.0,
             reorder_level=5,
-            supplier_id=supplier2.id,
+            supplier_id=None,
             conversion_ratio=1.0
         )
         session.add(product2)
-    
+        session.commit()
     if not session.query(Product).filter_by(sku='SKU003').first():
-        supplier3 = session.query(Supplier).filter_by(name='Agastya').first()
-        if not supplier3:
-            supplier3 = Supplier(
-                name='Agastya',
-                email='dhumalpiyush08@gmail.com',
-                phone='9860093451',
-                address='FB - 102, Shravandhara\nSasane Nagar, Hadapsar',
-                company='Mangu',
-                tax_id='TAX23534',
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
-            session.add(supplier3)
-            session.commit()
-        
         product3 = Product(
             name='Software License',
             sku='SKU003',
@@ -265,95 +333,11 @@ def seed_data():
             unit='licenses',
             cost=50.0,
             reorder_level=20,
-            supplier_id=supplier3.id,
+            supplier_id=None,
             conversion_ratio=1.0
         )
         session.add(product3)
-    
-    session.commit()
-    
-    # Update existing products that don't have suppliers assigned
-    products_without_suppliers = session.query(Product).filter(Product.supplier_id.is_(None)).all()
-    suppliers = session.query(Supplier).all()
-    
-    if products_without_suppliers and suppliers:
-        for i, product in enumerate(products_without_suppliers):
-            # Assign suppliers in round-robin fashion
-            supplier = suppliers[i % len(suppliers)]
-            product.supplier_id = supplier.id
         session.commit()
-    
-    # Create sample project
-    if not session.query(Project).filter_by(name='Office Renovation Project').first():
-        pm_user = session.query(User).filter_by(username='pm1').first()
-        project = Project(
-            name='Office Renovation Project',
-            description='Complete renovation of the main office building including new furniture, electronics, and software upgrades.',
-            project_manager_id=pm_user.id,
-            status='incoming',
-            priority='high',
-            budget=50000.0,
-            start_date=datetime.now(),
-            deadline=datetime.now() + timedelta(days=90),
-            predicted_end_date=None,
-            working_hours_per_day=8,
-            approval_buffer_days=5,
-            location='Main Office Building',
-            transportation_cost=500.0,
-            total_cost=0.0,
-            progress=0.0,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        session.add(project)
-        session.commit()
-        
-        # Add project requirements
-        product1 = session.query(Product).filter_by(sku='SKU001').first()
-        product2 = session.query(Product).filter_by(sku='SKU002').first()
-        product3 = session.query(Product).filter_by(sku='SKU003').first()
-        
-        req1 = ProjectRequirement(
-            project_id=project.id,
-            product_id=product1.id,
-            quantity_required=20,
-            quantity_ordered=0,
-            quantity_received=0,
-            specifications=json.dumps({'specs': 'High-performance laptops for development team'}),
-            priority='high',
-            is_ordered=False,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        session.add(req1)
-        
-        req2 = ProjectRequirement(
-            project_id=project.id,
-            product_id=product2.id,
-            quantity_required=30,
-            quantity_ordered=0,
-            quantity_received=0,
-            specifications=json.dumps({'specs': 'Ergonomic office chairs'}),
-            priority='medium',
-            is_ordered=False,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        session.add(req2)
-        
-        req3 = ProjectRequirement(
-            project_id=project.id,
-            product_id=product3.id,
-            quantity_required=50,
-            quantity_ordered=0,
-            quantity_received=0,
-            specifications=json.dumps({'specs': 'Project management software licenses'}),
-            priority='normal',
-            is_ordered=False,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        session.add(req3)
     
     # Add sample customer
     if not session.query(Customer).filter_by(name='Sample Customer').first():
@@ -483,6 +467,316 @@ def seed_data():
             session.add(fp_material)
             session.commit()
 
+    # --- POWER MANAGEMENT CONTROLS MATERIALS ---
+    power_products = [
+        {
+            'name': 'LT Panel (PCC)',
+            'sku': 'PWR-LT-PCC-001',
+            'category': 'Power Distribution',
+            'quantity': 10,
+            'unit': 'pcs',
+            'cost': 120000.0,
+            'base_price': 145000.0,
+            'procurement_cost': 120000.0,
+            'min_load_kw': 50,
+            'max_load_kw': 500,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Distribution', 'Industrial'],
+            'compliance_tags': ['IS-8623', 'IEC-61439'],
+            'features': ['Drawout feeders', 'Remote monitoring', 'Energy metering'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 7,
+            'delivery_fee': 2000.0,
+            'customization_fee': 8000.0,
+            'installation_fee': 12000.0,
+            'warranty_note': '2 years on-site warranty',
+            'image_url': 'https://example.com/pcc_panel.jpg',
+            'reorder_level': 2,
+        },
+        {
+            'name': 'HT Panel (MCC)',
+            'sku': 'PWR-HT-MCC-002',
+            'category': 'Power Distribution',
+            'quantity': 6,
+            'unit': 'pcs',
+            'cost': 250000.0,
+            'base_price': 295000.0,
+            'procurement_cost': 250000.0,
+            'min_load_kw': 200,
+            'max_load_kw': 2000,
+            'voltage_rating': 11000,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Distribution', 'Heavy Industry'],
+            'compliance_tags': ['IS-3427', 'IEC-62271'],
+            'features': ['Motor protection', 'SCADA integration'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 14,
+            'delivery_fee': 3500.0,
+            'customization_fee': 12000.0,
+            'installation_fee': 20000.0,
+            'warranty_note': '3 years warranty',
+            'image_url': 'https://example.com/mcc_panel.jpg',
+            'reorder_level': 1,
+        },
+        {
+            'name': 'Bus Duct',
+            'sku': 'PWR-BUSDUCT-003',
+            'category': 'Bus Ducts & Cable Trays',
+            'quantity': 100,
+            'unit': 'meters',
+            'cost': 1800.0,
+            'base_price': 2200.0,
+            'procurement_cost': 1800.0,
+            'min_load_kw': 50,
+            'max_load_kw': 2000,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Transmission'],
+            'compliance_tags': ['IS-8623'],
+            'features': ['Sandwich type', 'Copper conductor'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 5,
+            'delivery_fee': 500.0,
+            'customization_fee': 2000.0,
+            'installation_fee': 3000.0,
+            'warranty_note': '1 year warranty',
+            'image_url': 'https://example.com/busduct.jpg',
+            'reorder_level': 20,
+        },
+        {
+            'name': 'Industrial PLC Panel',
+            'sku': 'PWR-PLC-004',
+            'category': 'Automation',
+            'quantity': 8,
+            'unit': 'pcs',
+            'cost': 95000.0,
+            'base_price': 115000.0,
+            'procurement_cost': 95000.0,
+            'min_load_kw': 1,
+            'max_load_kw': 50,
+            'voltage_rating': 230,
+            'phase_type': 'Single',
+            'application_tags': ['Automation', 'Process Control'],
+            'compliance_tags': ['IEC-61131'],
+            'features': ['Programmable', 'Remote diagnostics'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 10,
+            'delivery_fee': 1200.0,
+            'customization_fee': 4000.0,
+            'installation_fee': 6000.0,
+            'warranty_note': '18 months warranty',
+            'image_url': 'https://example.com/plc_panel.jpg',
+            'reorder_level': 2,
+        },
+        {
+            'name': 'Energy Monitoring System',
+            'sku': 'PWR-EMS-005',
+            'category': 'Energy Monitoring',
+            'quantity': 15,
+            'unit': 'pcs',
+            'cost': 35000.0,
+            'base_price': 42000.0,
+            'procurement_cost': 35000.0,
+            'min_load_kw': 1,
+            'max_load_kw': 1000,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Energy Monitoring', 'Data Logging'],
+            'compliance_tags': ['IEC-62053'],
+            'features': ['Web dashboard', 'Multi-channel'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 4,
+            'delivery_fee': 800.0,
+            'customization_fee': 2000.0,
+            'installation_fee': 2500.0,
+            'warranty_note': '1 year warranty',
+            'image_url': 'https://example.com/ems.jpg',
+            'reorder_level': 3,
+        },
+        {
+            'name': 'Smart Meter',
+            'sku': 'PWR-SMTR-006',
+            'category': 'Energy Monitoring',
+            'quantity': 30,
+            'unit': 'pcs',
+            'cost': 9000.0,
+            'base_price': 11000.0,
+            'procurement_cost': 9000.0,
+            'min_load_kw': 0,
+            'max_load_kw': 100,
+            'voltage_rating': 230,
+            'phase_type': 'Single',
+            'application_tags': ['Energy Monitoring', 'Smart Grid'],
+            'compliance_tags': ['IS-13779'],
+            'features': ['Remote reading', 'Tamper detection'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 3,
+            'delivery_fee': 300.0,
+            'customization_fee': 1000.0,
+            'installation_fee': 1200.0,
+            'warranty_note': '2 years warranty',
+            'image_url': 'https://example.com/smart_meter.jpg',
+            'reorder_level': 5,
+        },
+        {
+            'name': 'Power Factor Correction Unit',
+            'sku': 'PWR-PFCU-007',
+            'category': 'Power Quality',
+            'quantity': 12,
+            'unit': 'pcs',
+            'cost': 40000.0,
+            'base_price': 48000.0,
+            'procurement_cost': 40000.0,
+            'min_load_kw': 10,
+            'max_load_kw': 500,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Quality', 'Industrial'],
+            'compliance_tags': ['IS-13340'],
+            'features': ['Automatic switching', 'Thyristor based'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 6,
+            'delivery_fee': 1000.0,
+            'customization_fee': 2500.0,
+            'installation_fee': 3500.0,
+            'warranty_note': '2 years warranty',
+            'image_url': 'https://example.com/pfcu.jpg',
+            'reorder_level': 2,
+        },
+        {
+            'name': 'Dry Type Transformer',
+            'sku': 'PWR-TRFMR-008',
+            'category': 'Transformers',
+            'quantity': 4,
+            'unit': 'pcs',
+            'cost': 350000.0,
+            'base_price': 410000.0,
+            'procurement_cost': 350000.0,
+            'min_load_kw': 100,
+            'max_load_kw': 2500,
+            'voltage_rating': 11000,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Distribution', 'Industrial'],
+            'compliance_tags': ['IS-11171'],
+            'features': ['Low loss', 'Self-cooled'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 20,
+            'delivery_fee': 8000.0,
+            'customization_fee': 20000.0,
+            'installation_fee': 25000.0,
+            'warranty_note': '5 years warranty',
+            'image_url': 'https://example.com/transformer.jpg',
+            'reorder_level': 1,
+        },
+        {
+            'name': 'Solar Inverter Panel',
+            'sku': 'PWR-SOLAR-009',
+            'category': 'Solar Power',
+            'quantity': 10,
+            'unit': 'pcs',
+            'cost': 60000.0,
+            'base_price': 72000.0,
+            'procurement_cost': 60000.0,
+            'min_load_kw': 5,
+            'max_load_kw': 100,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Solar Power', 'Renewable'],
+            'compliance_tags': ['IEC-62109'],
+            'features': ['MPPT', 'Remote monitoring'],
+            'mount_type': 'Outdoor',
+            'lead_time_days': 8,
+            'delivery_fee': 1500.0,
+            'customization_fee': 3000.0,
+            'installation_fee': 5000.0,
+            'warranty_note': '3 years warranty',
+            'image_url': 'https://example.com/solar_inverter.jpg',
+            'reorder_level': 2,
+        },
+        {
+            'name': 'UPS System',
+            'sku': 'PWR-UPS-010',
+            'category': 'Power Backup',
+            'quantity': 7,
+            'unit': 'pcs',
+            'cost': 85000.0,
+            'base_price': 99000.0,
+            'procurement_cost': 85000.0,
+            'min_load_kw': 5,
+            'max_load_kw': 200,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Backup', 'Critical Loads'],
+            'compliance_tags': ['IEC-62040'],
+            'features': ['Online double conversion', 'Battery management'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 6,
+            'delivery_fee': 1200.0,
+            'customization_fee': 4000.0,
+            'installation_fee': 6000.0,
+            'warranty_note': '2 years warranty',
+            'image_url': 'https://example.com/ups.jpg',
+            'reorder_level': 2,
+        },
+        {
+            'name': 'DG Sync Panel',
+            'sku': 'PWR-DGSYNC-011',
+            'category': 'Power Backup',
+            'quantity': 5,
+            'unit': 'pcs',
+            'cost': 130000.0,
+            'base_price': 155000.0,
+            'procurement_cost': 130000.0,
+            'min_load_kw': 50,
+            'max_load_kw': 1000,
+            'voltage_rating': 415,
+            'phase_type': '3-phase',
+            'application_tags': ['Power Backup', 'Generator Synchronization'],
+            'compliance_tags': ['IS-13947'],
+            'features': ['Auto DG synchronizing', 'Load sharing'],
+            'mount_type': 'Indoor',
+            'lead_time_days': 10,
+            'delivery_fee': 2000.0,
+            'customization_fee': 7000.0,
+            'installation_fee': 9000.0,
+            'warranty_note': '2 years warranty',
+            'image_url': 'https://example.com/dg_sync_panel.jpg',
+            'reorder_level': 1,
+        },
+    ]
+    for prod in power_products:
+        if not session.query(Product).filter_by(sku=prod['sku']).first():
+            product = Product(
+                name=prod['name'],
+                sku=prod['sku'],
+                category=prod['category'],
+                quantity=prod['quantity'],
+                unit=prod['unit'],
+                cost=prod['cost'],
+                base_price=prod['base_price'],
+                procurement_cost=prod['procurement_cost'],
+                min_load_kw=prod['min_load_kw'],
+                max_load_kw=prod['max_load_kw'],
+                voltage_rating=prod['voltage_rating'],
+                phase_type=prod['phase_type'],
+                application_tags=json.dumps(prod['application_tags']),
+                compliance_tags=json.dumps(prod['compliance_tags']),
+                features=json.dumps(prod['features']),
+                mount_type=prod['mount_type'],
+                lead_time_days=prod['lead_time_days'],
+                delivery_fee=prod['delivery_fee'],
+                customization_fee=prod['customization_fee'],
+                installation_fee=prod['installation_fee'],
+                warranty_note=prod['warranty_note'],
+                image_url=prod['image_url'],
+                reorder_level=prod['reorder_level'],
+                supplier_id=None,  # Master material
+                conversion_ratio=1.0
+            )
+            session.add(product)
+            session.commit()
+
     if not session.query(CompanyHoliday).first():
         holidays = [
             CompanyHoliday(name='New Year\'s Day', date=datetime(datetime.now().year, 1, 1)),
@@ -492,6 +786,16 @@ def seed_data():
         session.add_all(holidays)
 
     session.commit()
+    session.close()
+
+def cleanup_non_master_materials():
+    from python_backend.models import Product
+    engine = get_engine()
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    deleted = session.query(Product).filter(Product.supplier_id.isnot(None)).delete(synchronize_session=False)
+    session.commit()
+    print(f"Deleted {deleted} non-master materials (products with supplier_id not None)")
     session.close()
 
 if __name__ == '__main__':

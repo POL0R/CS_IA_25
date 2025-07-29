@@ -7,12 +7,11 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEiCiSM2w0TQ-n
 const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, onRestockValidityChange, onModeChange }, ref) => {
   const [formData, setFormData] = useState({
     name: '',
-    quantity: 0,
+    current_stock: 0,
     cost: 0,
     reorder_level: 0,
     supplier: '',
     type: 'Product',
-    location: '',
     photo_url: ''
   });
   const [products, setProducts] = useState([]);
@@ -31,7 +30,7 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
   useImperativeHandle(ref, () => ({
     handleSubmit,
     handleRestockSubmit,
-    isValid: formData.name && formData.quantity >= 0 && formData.cost >= 0 && formData.reorder_level >= 0,
+    isValid: formData.name && formData.current_stock >= 0 && formData.cost >= 0 && formData.reorder_level >= 0,
     loading,
     mode
   }));
@@ -43,7 +42,8 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
   }, []);
 
   useEffect(() => {
-    const valid = formData.name && formData.quantity >= 0 && formData.cost >= 0 && formData.reorder_level >= 0 && formData.supplier && formData.location && formData.type;
+    // Accept 'Not decided yet' as a valid supplier
+    const valid = formData.name && formData.current_stock >= 0 && formData.cost >= 0 && formData.reorder_level >= 0 && (formData.supplier || formData.supplier === 'Not decided yet') && formData.type;
     if (onValidityChange) onValidityChange(!!valid);
   }, [formData, onValidityChange]);
 
@@ -107,19 +107,24 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     // Robust validation
-    const requiredFields = ['name', 'quantity', 'cost', 'reorder_level', 'supplier'];
+    const requiredFields = ['name', 'current_stock', 'cost', 'reorder_level'];
     for (const field of requiredFields) {
-      if (!formData[field] || (typeof formData[field] === 'string' && formData[field].trim() === '')) {
+      if (!formData[field] && formData[field] !== 0 || (typeof formData[field] === 'string' && formData[field].trim() === '')) {
         alert(`Please fill in the required field: ${field}`);
         return;
       }
     }
+    // Supplier is required, but 'Not decided yet' is valid
+    if (!formData.supplier && formData.supplier !== 'Not decided yet') {
+      alert('Please select a supplier or choose "Not decided yet".');
+      return;
+    }
     // Numeric validation
-    if (isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
-      alert('Quantity must be a non-negative number');
+    if (isNaN(Number(formData.current_stock)) || Number(formData.current_stock) < 0) {
+      alert('Current stock must be a non-negative number');
       return;
     }
     if (isNaN(Number(formData.cost)) || Number(formData.cost) < 0) {
@@ -135,56 +140,71 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
     for (const key in payload) {
       if (typeof payload[key] === 'string') payload[key] = payload[key].trim();
     }
-    
-    // Map frontend fields to backend expectations
-    payload.category = payload.type && payload.type.trim() ? payload.type.trim() : 'Product'; // Always set a valid category
-    payload.unit = 'units'; // Default unit
-    delete payload.type; // Remove the 'type' field
-    
-    // Handle supplier - if it's a supplier name, we need to find the supplier_id
-    if (payload.supplier && payload.supplier !== 'Not decided yet') {
-      const supplier = suppliers.find(s => s.name === payload.supplier);
+    payload.category = payload.type && payload.type.trim() ? payload.type.trim() : 'Product';
+    payload.unit = 'units';
+    delete payload.type;
+    // Do NOT set supplier_id in the product/material creation payload
+    delete payload.supplier_id;
+    delete payload.supplier;
+
+    // Check if material already exists
+    const materialsRes = await fetch('http://localhost:5001/materials');
+    const materials = await materialsRes.json();
+    const existingMaterial = materials.find(m => m.name.toLowerCase() === payload.name.toLowerCase());
+
+    // Find supplier_id
+    let supplierId = null;
+    if (formData.supplier && formData.supplier !== 'Not decided yet') {
+      const supplier = suppliers.find(s => s.name === formData.supplier);
       if (supplier) {
-        payload.supplier_id = supplier.id;
-        delete payload.supplier; // Remove supplier name, keep supplier_id
-      } else {
-        // If supplier not found, do not send supplier_id at all
-        delete payload.supplier;
-        delete payload.supplier_id;
+        supplierId = supplier.id;
       }
-    } else {
-      delete payload.supplier; // Remove supplier if not decided
-      delete payload.supplier_id;
     }
-    
-    // Generate random SKU if not present
-    payload.sku = 'SKU-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-    if (formData.photo_url) payload.photo_url = formData.photo_url;
-    setLoading(true);
-    fetch("http://localhost:5001/products", {
+
+    if (existingMaterial) {
+      // Only add a SupplierProduct entry if a real supplier is selected
+      if (supplierId) {
+        await fetch('http://localhost:5001/supplier-products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            supplier_id: supplierId,
+            product_id: existingMaterial.id,
+            current_stock: payload.current_stock,
+            unit_price: payload.cost,
+            reorder_level: payload.reorder_level
+          })
+        });
+      }
+      if (onMaterialAdded) onMaterialAdded();
+      return;
+    }
+
+    // If not exists, add new material (as master catalog, no supplier_id)
+    const addRes = await fetch('http://localhost:5001/materials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.json())
-      .then(data => {
-        setLoading(false);
-        if (data.success) {
-          // Reset form
-          setFormData({
-            name: '', quantity: 0, cost: 0, reorder_level: 0, supplier: '', type: '', location: '', photo_url: ''
-          });
-          setImagePreview(null); // Clear preview on successful submission
-          fetchProducts();
-          onMaterialAdded(); // Notify parent
-        } else {
-          alert('Error: ' + (data.error || 'Failed to add product'));
-        }
+      body: JSON.stringify({
+        ...payload,
+        reorder_level: payload.reorder_level,
+        quantity: payload.current_stock
       })
-      .catch(error => {
-        setLoading(false);
-        alert('Error: ' + error.message);
+    });
+    const newMaterial = await addRes.json();
+    if (newMaterial && newMaterial.id && supplierId) {
+      await fetch('http://localhost:5001/supplier-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          supplier_id: supplierId,
+          product_id: newMaterial.id,
+          current_stock: payload.current_stock,
+          unit_price: payload.cost,
+          reorder_level: payload.reorder_level
+        })
       });
+    }
+    if (onMaterialAdded) onMaterialAdded();
   };
 
   const handleRestockChange = (e) => {
@@ -411,8 +431,15 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required />
               </div>
               <div className="form-group">
-              <label>Initial Quantity *</label>
-                <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} min="0" required />
+              <label>Current Stock *</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.current_stock}
+                onChange={e => setFormData({ ...formData, current_stock: parseFloat(e.target.value) || 0 })}
+                required
+                placeholder="Enter your current stock"
+              />
               </div>
               <div className="form-group">
               <label>Cost per Unit *</label>
@@ -428,8 +455,8 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
                   isClearable
                   isSearchable
                 placeholder={`Search from ${suppliers.length} suppliers...`}
-                value={formData.supplier ? { label: formData.supplier, value: formData.supplier } : null}
-                onChange={option => handleChange({ target: { name: 'supplier', value: option ? option.value : '' } })}
+                value={formData.supplier ? { label: formData.supplier, value: formData.supplier } : { label: 'Not decided yet', value: 'Not decided yet' }}
+                onChange={option => handleChange({ target: { name: 'supplier', value: option ? option.value : 'Not decided yet' } })}
                   options={[
                   ...suppliers.map(s => ({ 
                     label: `${s.name}${s.company ? ' (' + s.company + ')' : ''}${s.specialty ? ' - ' + s.specialty : ''}`, 
@@ -456,15 +483,6 @@ const AddMaterial = forwardRef(({ onMaterialAdded, onCancel, onValidityChange, o
                     inputValue ? `No suppliers found matching "${inputValue}"` : 'No suppliers available'
                   }
                 />
-              </div>
-              <div className="form-group">
-                <label>Warehouse *</label>
-                <select name="location" value={formData.location || ''} onChange={handleChange} required>
-                  <option value="">Select warehouse</option>
-                  {warehouses.map(w => (
-                    <option key={w.id} value={w.name}>{w.name}</option>
-                  ))}
-                </select>
               </div>
               <div className="form-group">
                 <label>Type *</label>

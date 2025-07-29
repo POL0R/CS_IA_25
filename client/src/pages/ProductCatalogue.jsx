@@ -17,6 +17,7 @@ export default function ProductCatalogue() {
   const [editForm, setEditForm] = useState({
     model_name: '',
     total_cost: 0,
+    profit_margin_percent: 20.0,
     materials_cost: 0,
     labor_cost: 0,
     photo_url: ''
@@ -97,6 +98,14 @@ export default function ProductCatalogue() {
           aValue = a.total_cost || 0;
           bValue = b.total_cost || 0;
           break;
+        case 'base_price':
+          aValue = a.base_price || a.total_cost || 0;
+          bValue = b.base_price || b.total_cost || 0;
+          break;
+        case 'profit_margin':
+          aValue = a.profit_margin_percent || 20.0;
+          bValue = b.profit_margin_percent || 20.0;
+          break;
         case 'materials_count':
           aValue = a.materials_count || 0;
           bValue = b.materials_count || 0;
@@ -123,6 +132,9 @@ export default function ProductCatalogue() {
 
   const getProductImage = (product) => {
     if (product.photo_url) {
+      if (product.photo_url.startsWith('http://') || product.photo_url.startsWith('https://')) {
+        return product.photo_url;
+      }
       return `http://localhost:5001${product.photo_url}`;
     }
     // Return a placeholder for finished products
@@ -139,9 +151,11 @@ export default function ProductCatalogue() {
     setEditForm({
       model_name: product.model_name || '',
       total_cost: product.total_cost || 0,
+      profit_margin_percent: product.profit_margin_percent || 20.0,
       materials_cost: product.materials_cost || 0,
       labor_cost: product.labor_cost || 0,
-      photo_url: product.photo_url || ''
+      photo_url: product.photo_url || '',
+      estimated_hours: product.estimated_hours || 1
     });
     
     // Parse materials and skills from the product
@@ -177,7 +191,7 @@ export default function ProductCatalogue() {
     }
     
     // Set estimated hours (default to 1 if not available)
-    setEstimatedHours(1);
+    setEstimatedHours(product.estimated_hours || 1);
     
     setShowEditModal(true);
   };
@@ -378,6 +392,7 @@ export default function ProductCatalogue() {
         body: JSON.stringify({
           model_name: editForm.model_name,
           total_cost: editForm.total_cost,
+          profit_margin_percent: editForm.profit_margin_percent,
           materials_cost: editForm.materials_cost,
           labor_cost: editForm.labor_cost,
           photo_url: editForm.photo_url,
@@ -386,7 +401,8 @@ export default function ProductCatalogue() {
             name: m.label, 
             quantity: m.quantity 
           })),
-          skills: selectedSkills.map(s => s.label)
+          skills: selectedSkills.map(s => s.label),
+          estimated_hours: estimatedHours
         })
       });
 
@@ -484,15 +500,25 @@ export default function ProductCatalogue() {
           </div>
           <div className="stat-card">
             <span className="stat-number">
-              {finishedProducts.reduce((sum, p) => sum + (p.materials_count || 0), 0)}
+              ${finishedProducts.reduce((sum, p) => sum + (p.base_price || p.total_cost || 0), 0).toFixed(0)}
             </span>
-            <span className="stat-label">Total Materials</span>
+            <span className="stat-label">Total Value</span>
           </div>
           <div className="stat-card">
             <span className="stat-number">
-              {finishedProducts.reduce((sum, p) => sum + (p.skills_count || 0), 0)}
+              {finishedProducts.length > 0 ? 
+                (finishedProducts.reduce((sum, p) => sum + (p.profit_margin_percent || 20.0), 0) / finishedProducts.length).toFixed(1) : 
+                '0.0'}%
             </span>
-            <span className="stat-label">Total Skills</span>
+            <span className="stat-label">Avg Profit Margin</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-number">
+              {finishedProducts.length > 0 ? 
+                (finishedProducts.reduce((sum, p) => sum + (p.base_price || p.total_cost || 0), 0) / finishedProducts.length).toFixed(0) : 
+                '0'}
+            </span>
+            <span className="stat-label">Avg Selling Price</span>
           </div>
         </div>
       </div>
@@ -519,6 +545,8 @@ export default function ProductCatalogue() {
           >
             <option value="name">Sort by Name</option>
             <option value="cost">Sort by Cost</option>
+            <option value="base_price">Sort by Selling Price</option>
+            <option value="profit_margin">Sort by Profit Margin</option>
             <option value="materials_count">Sort by Materials</option>
             <option value="skills_count">Sort by Skills</option>
           </select>
@@ -575,6 +603,20 @@ export default function ProductCatalogue() {
                     <span className="detail-label">Total Cost:</span>
                     <span className="detail-value">
                       ${(product.total_cost || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Profit Margin:</span>
+                    <span className="detail-value" style={{ color: '#059669', fontWeight: 600 }}>
+                      {(product.profit_margin_percent || 20.0).toFixed(1)}%
+                    </span>
+                  </div>
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Selling Price:</span>
+                    <span className="detail-value" style={{ color: '#059669', fontWeight: 700, fontSize: '1.1em' }}>
+                      ${(product.base_price || product.total_cost || 0).toFixed(2)}
                     </span>
                   </div>
                   
@@ -644,6 +686,18 @@ export default function ProductCatalogue() {
                   <div className="detail-row">
                     <span className="detail-label">Total Cost:</span>
                     <span className="detail-value">${(selectedProduct.total_cost || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Profit Margin:</span>
+                    <span className="detail-value" style={{ color: '#059669', fontWeight: 600 }}>
+                      {(selectedProduct.profit_margin_percent || 20.0).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Selling Price:</span>
+                    <span className="detail-value" style={{ color: '#059669', fontWeight: 700, fontSize: '1.1em' }}>
+                      ${(selectedProduct.base_price || selectedProduct.total_cost || 0).toFixed(2)}
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Materials:</span>
@@ -780,6 +834,33 @@ export default function ProductCatalogue() {
                       type="number"
                       step="0.01"
                       value={editForm.labor_cost}
+                      readOnly
+                      className="readonly-input"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Profit Margin (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={editForm.profit_margin_percent}
+                      onChange={(e) => handleEditFormChange('profit_margin_percent', parseFloat(e.target.value) || 0)}
+                      placeholder="20.0"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Selling Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={(editForm.total_cost * (1 + editForm.profit_margin_percent / 100)).toFixed(2)}
                       readOnly
                       className="readonly-input"
                       placeholder="0.00"

@@ -30,6 +30,7 @@ export default function MaterialsCatalogue() {
   const addMaterialRef = useRef(null);
   const [priceHistory, setPriceHistory] = useState([]);
   const [demandHistory, setDemandHistory] = useState([]);
+  const [supplierPrices, setSupplierPrices] = useState({});
 
   useEffect(() => {
     fetchMaterials();
@@ -39,10 +40,22 @@ export default function MaterialsCatalogue() {
   const fetchMaterials = () => {
     fetch('http://localhost:5001/materials')
       .then(res => res.json())
-      .then(data => {
-        // Only show items that are not finished products (i.e., do not have a model_name or are not in finished_products)
-        const filteredMaterials = data.filter(m => !m.model_name);
-        setMaterials(filteredMaterials);
+      .then(async data => {
+        // For each material, fetch supplier prices
+        const materialsWithAvg = await Promise.all(data.filter(m => !m.model_name).map(async m => {
+          const res = await fetch(`http://localhost:5001/supplier-products-by-material/${m.id}`);
+          const suppliers = await res.json();
+          let avgCost = null;
+          if (Array.isArray(suppliers) && suppliers.length > 0) {
+            avgCost = suppliers.reduce((sum, s) => sum + (s.unit_price || 0), 0) / suppliers.length;
+          }
+          return { ...m, avgCost, suppliers };
+        }));
+        setMaterials(materialsWithAvg);
+        // Also store supplier prices for quick lookup in modal
+        const priceMap = {};
+        materialsWithAvg.forEach(m => { priceMap[m.id] = m.suppliers || []; });
+        setSupplierPrices(priceMap);
       })
       .catch(err => console.error('Error fetching materials:', err));
   };
@@ -61,6 +74,9 @@ export default function MaterialsCatalogue() {
 
   const getMaterialImage = (material) => {
     if (material.photo_url) {
+      if (material.photo_url.startsWith('http://') || material.photo_url.startsWith('https://')) {
+        return material.photo_url;
+      }
       return `http://localhost:5001${material.photo_url}`;
     }
     return '/placeholder-material.png'; // You can add a placeholder image
@@ -258,7 +274,24 @@ export default function MaterialsCatalogue() {
               <h3>{material.name}</h3>
               <p className="material-sku">SKU: {material.sku}</p>
               <p className="material-category">{material.category}</p>
-              <p className="material-cost">${material.cost} per {material.unit}</p>
+              <p className="material-cost">
+                {material.avgCost !== null && material.avgCost !== undefined
+                  ? `$${material.avgCost.toFixed(2)} avg per ${material.unit}`
+                  : 'No price yet'}
+              </p>
+              {/* Show all suppliers for this material */}
+              {material.suppliers && material.suppliers.length > 0 && (
+                <div className="material-suppliers">
+                  <span className="detail-label">Suppliers:</span>
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {material.suppliers.map((s, idx) => (
+                      <li key={s.id || idx}>
+                        {s.supplier_name || s.supplier_id} {s.unit_price ? `@ $${s.unit_price}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               
               {/* Stock Status */}
               <div className="material-stock">
@@ -372,7 +405,15 @@ export default function MaterialsCatalogue() {
                         {selectedMaterial.stock_status === 'normal' && '🟢 Good Stock'}
                       </span>
                       <span className="stock-details">
-                        {selectedMaterial.quantity} {selectedMaterial.unit} in stock
+                        {(() => {
+                          // Show sum of all supplier stocks if available, else product quantity
+                          if (selectedMaterial && selectedMaterial.suppliers && selectedMaterial.suppliers.length > 0) {
+                            const totalStock = selectedMaterial.suppliers.reduce((sum, s) => sum + (s.current_stock || 0), 0);
+                            return `Current Stock: ${totalStock} ${selectedMaterial.unit}`;
+                          } else {
+                            return `Current Stock: ${selectedMaterial.quantity} ${selectedMaterial.unit}`;
+                          }
+                        })()}
                         {selectedMaterial.reorder_level && (
                           <span className="reorder-level">
                             (Reorder at {selectedMaterial.reorder_level} {selectedMaterial.unit})
@@ -381,6 +422,20 @@ export default function MaterialsCatalogue() {
                       </span>
                     </div>
                   </div>
+                  
+                  {/* Type and Reorder Level */}
+                  {selectedMaterial && (
+                    <>
+                      <div className="detail-row">
+                        <span className="detail-label">Type:</span>
+                        <span className="detail-value">{selectedMaterial.type || selectedMaterial.category || '-'}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="detail-label">Reorder Level:</span>
+                        <span className="detail-value">{selectedMaterial.reorder_level}</span>
+                      </div>
+                    </>
+                  )}
                   
                   {/* Supplier Information */}
                   {selectedMaterial.supplier_info && (
@@ -450,6 +505,33 @@ export default function MaterialsCatalogue() {
                     <div className="detail-row">
                       <span className="detail-label">Description:</span>
                       <span className="detail-value">{selectedMaterial.description}</span>
+                    </div>
+                  )}
+                  
+                  {/* Supplier Prices Table */}
+                  {selectedMaterial && supplierPrices[selectedMaterial.id] && supplierPrices[selectedMaterial.id].length > 0 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Supplier Prices:</span>
+                      <span className="detail-value">
+                        <table style={{ color: '#fff', background: '#222', borderRadius: 8, marginTop: 8 }}>
+                          <thead>
+                            <tr>
+                              <th>Supplier</th>
+                              <th>Price</th>
+                              <th>Stock</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {supplierPrices[selectedMaterial.id].map((sp, idx) => (
+                              <tr key={idx}>
+                                <td>{sp.supplier_name || sp.supplier_id}</td>
+                                <td>${sp.unit_price}</td>
+                                <td>{sp.current_stock}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </span>
                     </div>
                   )}
                   

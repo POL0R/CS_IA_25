@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { users } from "../data/users";
 import bcrypt from "bcryptjs";
 import "./Login.css";
 
@@ -27,7 +26,16 @@ export default function Login({ onLogin }) {
       });
       const data = await res.json();
       if (data.success) {
-        const userObj = { username: data.username, role: data.role, user_id: data.user_id };
+        // Fetch user profile to get email
+        let userEmail = null;
+        try {
+          const userProfileRes = await fetch(`http://localhost:5001/users?username=${encodeURIComponent(data.username)}`);
+          if (userProfileRes.ok) {
+            const userProfile = await userProfileRes.json();
+            if (userProfile && userProfile.email) userEmail = userProfile.email;
+          }
+        } catch (e) {}
+        const userObj = { username: data.username, role: data.role, user_id: data.user_id, email: userEmail };
         localStorage.setItem("user", JSON.stringify(userObj));
         if (onLogin) onLogin(userObj);
       } else {

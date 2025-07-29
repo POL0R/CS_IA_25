@@ -157,7 +157,7 @@ export default function Customers() {
               </div>
               <div className="detail-item">
                 <span className="detail-label">Credit Limit:</span>
-                <span className="detail-value credit-limit">${customer.credit_limit.toFixed(2)}</span>
+                <span className="detail-value credit-limit">${typeof customer.credit_limit === 'number' ? customer.credit_limit.toFixed(2) : '0.00'}</span>
               </div>
               {customer.address && (
                 <div className="detail-item full-width">

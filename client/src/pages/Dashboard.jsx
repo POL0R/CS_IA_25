@@ -12,13 +12,16 @@ import Employees from "./Employees";
 import Suppliers from "./Suppliers";
 import { useNavigate, Link } from 'react-router-dom';
 import CustomerRequests from "./CustomerRequests";
-import SupplierDashboard from "./SupplierDashboard";
 import SupplierRequests from "./SupplierRequests";
 import WarehouseRequests from "./WarehouseRequests";
+import SupplierOnboarding from "./SupplierOnboarding";
+import SupplierDashboard from './SupplierDashboard';
 
 export default function Dashboard({ userRole, user: userProp, onLogout }) {
   const [user, setUser] = useState(userProp || null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [supplierProfile, setSupplierProfile] = useState(null);
+  const [supplierOnboardingComplete, setSupplierOnboardingComplete] = useState(false);
 
   // Dashboard data state
   const [kpis, setKpis] = useState(null);
@@ -95,6 +98,32 @@ export default function Dashboard({ userRole, user: userProp, onLogout }) {
   const isTransporter = userRole === 'transporter';
   const isSupplier = userRole === 'supplier';
 
+  // Fetch supplier profile if supplier
+  useEffect(() => {
+    if (isSupplier && user && user.email) {
+      fetch("http://localhost:5001/suppliers")
+        .then(res => res.json())
+        .then(data => {
+          const found = data.find(s => s.email === user.email);
+          setSupplierProfile(found || null);
+          setSupplierOnboardingComplete(found && found.registration_complete);
+        });
+    }
+  }, [isSupplier, user]);
+
+  // Also re-check onboarding state on mount and after logout/login
+  useEffect(() => {
+    if (isSupplier && user && user.email) {
+      fetch("http://localhost:5001/suppliers")
+        .then(res => res.json())
+        .then(data => {
+          const found = data.find(s => s.email === user.email);
+          setSupplierProfile(found || null);
+          setSupplierOnboardingComplete(found && found.registration_complete);
+        });
+    }
+  }, []);
+
   if (!user) {
     return <div>Loading...</div>;
   }
@@ -152,53 +181,87 @@ export default function Dashboard({ userRole, user: userProp, onLogout }) {
 
   // --- SUPPLIER DASHBOARD ---
   if (isSupplier) {
-    return (
-      <div className="dashboard-container">
-        <div className="sidebar">
-          <div className="sidebar-header">
-            <div className="logo-container">
-              <div className="logo-icon">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h6a1 1 0 001-1v-6a1 1 0 00-1-1h-6z"/>
-                </svg>
-              </div>
-              <h2 className="logo-text">StockFlow</h2>
-            </div>
-          </div>
-          <nav className="sidebar-nav">
-            <button className="nav-item" onClick={() => setActiveTab("dashboard")}>Dashboard</button>
-            <button className="nav-item" onClick={() => setActiveTab("profile")}>Profile</button>
-          </nav>
-          <div className="sidebar-footer">
-            <div className="user-info">
-              <div className="user-avatar">{user.username.charAt(0).toUpperCase()}</div>
-              <div className="user-details">
-                <span className="user-name">{user.username}</span>
-                <span className="user-role">{user.role}</span>
-              </div>
-            </div>
-            <button className="logout-button" onClick={handleLogout}>
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-              </svg>
-              Logout
-            </button>
-          </div>
-        </div>
-        <div className="main-content">
-          {activeTab === "profile" ? (
-            <div style={{ padding: 32 }}>
-              <h1>Supplier Profile</h1>
-              <p>Username: {user.username}</p>
-              <p>Role: {user.role}</p>
-              {/* Add more supplier info here */}
-            </div>
-          ) : (
-            <SupplierDashboard user={user} />
-          )}
-        </div>
-      </div>
-    );
+    if (!supplierOnboardingComplete) {
+      return <SupplierOnboarding user={user} profile={supplierProfile} onComplete={async (form) => {
+        // Check if supplier exists by email
+        const res = await fetch("http://localhost:5001/suppliers");
+        const allSuppliers = await res.json();
+        const existing = allSuppliers.find(s => s.email === form.email);
+        const supplierPayload = {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          company: form.company,
+          tax_id: form.tax_id,
+          address: form.address,
+          lat: (form.lat !== '' && !isNaN(Number(form.lat))) ? Number(form.lat) : null,
+          lng: (form.lng !== '' && !isNaN(Number(form.lng))) ? Number(form.lng) : null,
+          registration_complete: true
+        };
+        if (supplierPayload.lat === null || supplierPayload.lng === null) {
+          alert('Please select a valid location on the map before submitting.');
+          return;
+        }
+        let supplierId;
+        if (existing) {
+          await fetch(`http://localhost:5001/suppliers/${existing.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(supplierPayload)
+          });
+          supplierId = existing.id;
+        } else {
+          const createRes = await fetch("http://localhost:5001/suppliers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(supplierPayload)
+          });
+          const createData = await createRes.json();
+          supplierId = createData.supplier_id;
+        }
+        // For each material, create a supplier-product entry if not already present
+        for (const m of form.materials) {
+          // Check if already present
+          const spRes = await fetch(`http://localhost:5001/supplier-products/${supplierId}`);
+          const spList = await spRes.json();
+          const already = spList.find(sp => String(sp.product_id) === String(m.id));
+          if (!already) {
+            const resp = await fetch("http://localhost:5001/supplier-products", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                supplier_id: supplierId,
+                product_id: m.id,
+                current_stock: 0,
+                unit_price: m.price,
+                is_active: true
+              })
+            });
+            if (!resp.ok) {
+              let msg = `Failed to link material '${m.name}'.`;
+              try {
+                const err = await resp.json();
+                msg += ` Reason: ${err.error || resp.statusText}`;
+              } catch {}
+              alert(msg);
+            }
+          }
+        }
+        // Optionally, trigger a refresh of the materials list if possible (e.g., via a callback or window reload)
+        if (window.location.pathname.includes('admin') || window.location.pathname.includes('catalogue')) {
+          window.location.reload();
+        }
+        // Refetch supplier profile to update state
+        fetch("http://localhost:5001/suppliers")
+          .then(res => res.json())
+          .then(data => {
+            const found = data.find(s => s.email === form.email);
+            setSupplierProfile(found || null);
+            setSupplierOnboardingComplete(found && found.registration_complete);
+          });
+      }} />;
+    }
+    return <SupplierDashboard user={{...user, supplier_id: supplierProfile?.id}} onLogout={onLogout} />;
   }
 
   // --- ADMIN, STOREKEEPER, PROJECT MANAGER, EMPLOYEE, MANAGER, TRANSPORTER DASHBOARDS ---
@@ -816,10 +879,7 @@ export default function Dashboard({ userRole, user: userProp, onLogout }) {
 
               {activeTab === "settings" && (
                 <div className="settings-content">
-                  <div className="content-placeholder">
-                    <h2>System Settings</h2>
-                    <p>User management, system configuration, and audit logs will be implemented here.</p>
-                  </div>
+                  <Settings />
                 </div>
               )}
 

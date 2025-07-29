@@ -2,8 +2,35 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enu
 from sqlalchemy.orm import relationship, declarative_base
 import enum
 from datetime import datetime
+from sqlalchemy import Table
 
 Base = declarative_base()
+
+# Association tables for many-to-many
+product_features = Table('product_features', Base.metadata,
+    Column('product_id', Integer, ForeignKey('products.id')),
+    Column('feature_id', Integer, ForeignKey('features.id'))
+)
+product_compliance_tags = Table('product_compliance_tags', Base.metadata,
+    Column('product_id', Integer, ForeignKey('products.id')),
+    Column('compliance_tag_id', Integer, ForeignKey('compliance_tags.id'))
+)
+finished_product_features = Table('finished_product_features', Base.metadata,
+    Column('finished_product_id', Integer, ForeignKey('finished_products.id')),
+    Column('feature_id', Integer, ForeignKey('features.id'))
+)
+finished_product_compliance_tags = Table('finished_product_compliance_tags', Base.metadata,
+    Column('finished_product_id', Integer, ForeignKey('finished_products.id')),
+    Column('compliance_tag_id', Integer, ForeignKey('compliance_tags.id'))
+)
+
+# Association table for many-to-many between SupplierRequest and Supplier
+supplier_request_suppliers = Table(
+    'supplier_request_suppliers', Base.metadata,
+    Column('request_id', Integer, ForeignKey('supplier_requests.id')),
+    Column('supplier_id', Integer, ForeignKey('suppliers.id')),
+    Column('supplier_status', String(20), default='pending')  # pending, accepted, rejected, quoted
+)
 
 # Enums
 class UserRole(enum.Enum):
@@ -87,6 +114,7 @@ class Supplier(Base):
     lng = Column(Float)
     is_spam = Column(Boolean)
     banned_email = Column(Boolean)
+    registration_complete = Column(Boolean, default=False)
     products = relationship('Product', back_populates='supplier')
     transactions = relationship('Transaction', back_populates='supplier')
 
@@ -127,6 +155,8 @@ class Product(Base):
     transactions = relationship('Transaction', back_populates='product')
     finished_products = relationship('FinishedProduct', secondary='finished_product_materials', back_populates='materials')
     skills = relationship('Skill', secondary='material_skills', back_populates='materials')
+    # features = relationship('Feature', secondary=product_features, backref='products')
+    # compliance_tags = relationship('ComplianceTag', secondary=product_compliance_tags, backref='products')
 
 class Order(Base):
     __tablename__ = 'orders'
@@ -137,6 +167,8 @@ class Order(Base):
     status = Column(Enum(OrderStatus))
     order_date = Column(DateTime)
     delivery_date = Column(DateTime)
+    proposed_deadline = Column(DateTime)  # New field for customer's proposed deadline
+    delivery_address = Column(Text)  # New field for delivery location
     total_amount = Column(Float)
     profit_amount = Column(Float)  # new field for margin tracking
     notes = Column(Text)
@@ -352,14 +384,27 @@ class FinishedProduct(Base):
     __tablename__ = "finished_products"
     id = Column(Integer, primary_key=True)
     model_name = Column(String(100), nullable=False)
-    total_cost = Column(Float)
+    total_cost = Column(Float)  # Cost price (materials + labor)
+    profit_margin_percent = Column(Float, default=20.0)  # Default 20% profit margin
+    base_price = Column(Float)  # Selling price (total_cost + profit)
     materials_json = Column(Text)
     photo_url = Column(Text)
     weight = Column(Float)  # Add weight field
-    
+    # Recommendation parameters
+    phase_type = Column(String(20))
+    mount_type = Column(String(20))
+    compliance_tags = Column(Text)   # JSON string
+    features = Column(Text)          # JSON string
+    application_tags = Column(Text)  # JSON string
+    voltage_rating = Column(Integer)
+    min_load_kw = Column(Integer)
+    max_load_kw = Column(Integer)
+    estimated_hours = Column(Float)
     # Relationships
     skills = relationship('Skill', secondary='finished_product_skills', back_populates='finished_products')
     materials = relationship('Product', secondary='finished_product_materials', back_populates='finished_products')
+    # features = relationship('Feature', secondary=finished_product_features, backref='finished_products')
+    # compliance_tags = relationship('ComplianceTag', secondary=finished_product_compliance_tags, backref='finished_products')
 
 
 class FinishedProductSkill(Base):
@@ -389,6 +434,7 @@ class CustomerRequest(Base):
     product_id = Column(Integer, ForeignKey("products.id"))
     quantity = Column(Float, nullable=False)
     expected_delivery = Column(DateTime)
+    delivery_address = Column(Text)
     status = Column(String(20))
     manager_id = Column(Integer, ForeignKey("users.id"))
     quoted_price = Column(Float)
@@ -459,19 +505,21 @@ class SupplierRequest(Base):
     __tablename__ = "supplier_requests"
     id = Column(Integer, primary_key=True)
     request_number = Column(String(50), unique=True, nullable=False)
-    title = Column(String(200), nullable=False)
+    title = Column(String(500), nullable=False)
     description = Column(Text)
     requester_id = Column(Integer, ForeignKey("users.id"))
-    supplier_id = Column(Integer, ForeignKey("suppliers.id"))
+    supplier_id = Column(Integer, ForeignKey("suppliers.id"))  # keep for backward compatibility
     project_id = Column(Integer, ForeignKey("projects.id"))
-    priority = Column(String(20))
-    status = Column(String(20))
+    priority = Column(String(50))
+    status = Column(String(50))
     expected_delivery_date = Column(DateTime)
     delivery_address = Column(Text)
     total_amount = Column(Float)
     notes = Column(Text)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
+    # New: many-to-many relationship
+    suppliers = relationship('Supplier', secondary='supplier_request_suppliers', backref='requests')
 
 
 class SupplierRequestItem(Base):
@@ -520,11 +568,14 @@ class SupplierInvoiceItem(Base):
 class SupplierRequestStatus(enum.Enum):
     draft = "draft"
     sent = "sent"
+    pending = "pending"
     supplier_reviewing = "supplier_reviewing"
     supplier_quoted = "supplier_quoted"
     admin_reviewing = "admin_reviewing"
     approved = "approved"
+    accepted = "accepted"
     rejected = "rejected"
+    confirmed = "confirmed"
     in_production = "in_production"
     ready_for_delivery = "ready_for_delivery"
     delivered = "delivered"
@@ -592,6 +643,7 @@ class SupplierQuote(Base):
     terms_conditions = Column(Text)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
+    fulfillment_date = Column(DateTime)  # New field for supplier's proposed fulfillment date
 
 
 class SupplierQuoteItem(Base):
@@ -639,4 +691,98 @@ class RequirementsHistory(Base):
     # Relationships
     customer = relationship('Customer')
     matched_product = relationship('Product')
+
+
+class Feature(Base):
+    __tablename__ = 'features'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False)
+
+class ComplianceTag(Base):
+    __tablename__ = 'compliance_tags'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False)
+
+class ApplicationTag(Base):
+    __tablename__ = 'application_tags'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SupplierRequestQuote(Base):
+    __tablename__ = "supplier_request_quotes"
+    id = Column(Integer, primary_key=True)
+    quote_number = Column(String(50), unique=True, nullable=False)
+    request_id = Column(Integer, ForeignKey("supplier_requests.id"))
+    supplier_id = Column(Integer, ForeignKey("suppliers.id"))
+    total_amount = Column(Float)
+    status = Column(String(20))
+    fulfillment_date = Column(DateTime)
+    packed_date = Column(DateTime)  # New: when supplier marks as packed
+    dispatched_date = Column(DateTime)  # New: when supplier marks as dispatched
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+
+# New models for supplier negotiations
+class SupplierNegotiation(Base):
+    __tablename__ = "supplier_negotiations"
+    id = Column(Integer, primary_key=True)
+    request_id = Column(Integer, ForeignKey("supplier_requests.id"))
+    supplier_id = Column(Integer, ForeignKey("suppliers.id"))
+    offer_type = Column(String(20))  # 'revised_offer', 'counter_offer'
+    total_amount = Column(Float)
+    notes = Column(Text)
+    status = Column(String(20), default='pending')  # 'pending', 'accepted', 'rejected'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    # Relationships
+    request = relationship('SupplierRequest')
+    supplier = relationship('Supplier')
+    items = relationship('SupplierNegotiationItem', back_populates='negotiation', cascade="all, delete-orphan")
+
+class SupplierNegotiationItem(Base):
+    __tablename__ = "supplier_negotiation_items"
+    id = Column(Integer, primary_key=True)
+    negotiation_id = Column(Integer, ForeignKey("supplier_negotiations.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
+    quantity = Column(Float)
+    unit_price = Column(Float)
+    total_price = Column(Float)
+    specifications = Column(Text)
+    notes = Column(Text)
+    # Relationships
+    negotiation = relationship('SupplierNegotiation', back_populates='items')
+    product = relationship('Product')
+    # Add more fields as needed (e.g., delivery_terms, notes, etc.)
+
+
+class CustomerNegotiation(Base):
+    __tablename__ = "customer_negotiations"
+    id = Column(Integer, primary_key=True)
+    request_id = Column(Integer, ForeignKey("customer_requests.id"))
+    customer_id = Column(Integer, ForeignKey("users.id"))
+    offer_type = Column(String(20))  # 'customer_offer', 'admin_counter', 'finalized'
+    total_amount = Column(Float)
+    notes = Column(Text)
+    status = Column(String(20), default='pending')  # 'pending', 'accepted', 'rejected'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    # Relationships
+    request = relationship('CustomerRequest')
+    customer = relationship('User')
+    items = relationship('CustomerNegotiationItem', back_populates='negotiation', cascade="all, delete-orphan")
+
+class CustomerNegotiationItem(Base):
+    __tablename__ = "customer_negotiation_items"
+    id = Column(Integer, primary_key=True)
+    negotiation_id = Column(Integer, ForeignKey("customer_negotiations.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
+    quantity = Column(Float)
+    unit_price = Column(Float)
+    total_price = Column(Float)
+    specifications = Column(Text)
+    notes = Column(Text)
+    # Relationships
+    negotiation = relationship('CustomerNegotiation', back_populates='items')
+    product = relationship('Product')
 

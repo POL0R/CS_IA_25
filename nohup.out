@@ -1,0 +1,324 @@
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4565, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+Address already in use
+Port 5001 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4566, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4596, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+Address already in use
+Port 5001 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4617, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4738, in <module>
+    @app.route('/supplier-request-quotes', methods=['GET'])
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/sansio/scaffold.py", line 362, in decorator
+    self.add_url_rule(rule, endpoint, f, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/sansio/scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/sansio/app.py", line 657, in add_url_rule
+    raise AssertionError(
+AssertionError: View function mapping is overwriting an existing endpoint function: get_supplier_request_quotes
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4739, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4763, in <module>
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4763, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+Address already in use
+Port 5001 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4763, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 4763, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 6251, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 6207, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 6207, in <module>
+    app.run(debug=True, port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+Address already in use
+Port 5001 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://172.16.24.247:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 6513, in <module>
+    app.run(debug=True, host='0.0.0.0', port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://172.16.24.247:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 625-398-757
+Traceback (most recent call last):
+  File "/Users/piyush/Desktop/NEW/python_backend/api.py", line 6513, in <module>
+    app.run(debug=True, host='0.0.0.0', port=5001) 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/serving.py", line 1099, in run_simple
+    run_with_reloader(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')

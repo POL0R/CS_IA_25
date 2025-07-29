@@ -18,7 +18,7 @@ export default function Orders() {
   }, []);
 
   const fetchOrders = () => {
-    fetch("http://localhost:5001/orders")
+    fetch("http://localhost:5001/customer_requests")
       .then(res => res.json())
       .then(data => setOrders(data))
       .catch(() => setOrders([]));
@@ -110,9 +110,52 @@ export default function Orders() {
     setShowEditOrder(true);
   };
 
+  const handleOrderStatusUpdate = (requestId, action) => {
+    let url = '';
+    let method = 'POST';
+    let body = {};
+    
+    switch (action) {
+      case 'approve':
+        url = `http://localhost:5001/customer_requests/${requestId}/manager_review`;
+        body = { manager_id: 1, notes: 'Request approved by admin' };
+        break;
+      case 'reject':
+        url = `http://localhost:5001/customer_requests/${requestId}/manager_review`;
+        body = { manager_id: 1, notes: 'Request rejected by admin' };
+        break;
+      case 'quote':
+        url = `http://localhost:5001/customer_requests/${requestId}/quote`;
+        body = { quoted_price: 0 }; // This should be updated with actual price
+        break;
+      default:
+        alert(`Unknown action: ${action}`);
+        return;
+    }
+    
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to ${action} request`);
+        return res.json();
+      })
+      .then(() => {
+        alert(`Successfully ${action}ed customer request #${requestId}`);
+        fetchOrders();
+      })
+      .catch(error => {
+        console.error(`Error ${action}ing request:`, error);
+        alert(`Failed to ${action} customer request: ${error.message}`);
+      });
+  };
+
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (order.product_name && order.product_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (order.id && order.id.toString().includes(searchTerm));
     const matchesStatus = filterStatus === "all" || order.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -148,8 +191,8 @@ export default function Orders() {
       {/* Header */}
       <div className="orders-header">
         <div className="header-left">
-          <h1 className="page-title">Customer Orders</h1>
-          <p className="page-subtitle">Manage customer orders, track order status, and process stock movements</p>
+          <h1 className="page-title">Customer Requests</h1>
+          <p className="page-subtitle">Manage customer requests, track request status, and provide quotes</p>
         </div>
         <div className="header-actions">
           <button 
@@ -159,7 +202,7 @@ export default function Orders() {
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
-            Create Order
+            View All Requests
           </button>
         </div>
       </div>
@@ -172,7 +215,7 @@ export default function Orders() {
           </svg>
           <input
             type="text"
-            placeholder="Search orders by number or customer..."
+            placeholder="Search requests by customer, product, or ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -180,72 +223,52 @@ export default function Orders() {
         <div className="filter-controls">
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
+            <option value="submitted">Submitted</option>
+            <option value="manager_review">Manager Review</option>
+            <option value="quoted">Quoted</option>
+            <option value="customer_accepted">Customer Accepted</option>
+            <option value="customer_declined">Customer Declined</option>
+            <option value="in_transit">In Transit</option>
+            <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="orders-table-container">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>Order #</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th>Order Date</th>
-              <th>Delivery Date</th>
-              <th>Total Amount</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.map(order => (
-              <tr key={order.id}>
-                <td className="order-number">{order.order_number}</td>
-                <td>
-                  <div className="customer-info">
-                    <div className="customer-name">{order.customer_name}</div>
-                    <div className="customer-email">{order.customer_email}</div>
+      <div className="orders-cards-container" style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+        {filteredOrders.length === 0 ? (
+          <div style={{ color: '#888', marginBottom: 16 }}>No orders found.</div>
+        ) : filteredOrders.map(order => (
+          <div key={order.id} style={{
+            background: '#000',
+            borderRadius: 12,
+            boxShadow: '0 2px 8px rgba(60,60,120,0.10)',
+            padding: 24,
+            minWidth: 320,
+            maxWidth: 360,
+            flex: '1 1 320px',
+            display: 'flex',
+            flexDirection: 'column',
+            marginBottom: 16
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Request #{order.id}</div>
+            <div style={{ marginBottom: 6 }}><b>Customer:</b> {order.customer_name || order.customer_id}</div>
+            <div style={{ marginBottom: 6 }}><b>Product:</b> {order.product_name || order.product_id}</div>
+            <div style={{ marginBottom: 6 }}><b>Quantity:</b> {order.quantity}</div>
+            <div style={{ marginBottom: 6 }}><b>Status:</b> <span style={{ textTransform: 'capitalize', color: order.status === 'submitted' ? '#fbbf24' : order.status === 'manager_review' ? '#3b82f6' : order.status === 'quoted' ? '#10b981' : '#ef4444' }}>{order.status}</span></div>
+            <div style={{ marginBottom: 6 }}><b>Created:</b> {order.created_at ? formatDate(order.created_at) : ''}</div>
+            <div style={{ marginBottom: 6 }}><b>Expected Delivery:</b> {order.expected_delivery ? formatDate(order.expected_delivery) : '-'}</div>
+            <div style={{ marginBottom: 6 }}><b>Delivery Address:</b> {order.delivery_address || '-'}</div>
+            <div style={{ marginBottom: 6 }}><b>Quoted Price:</b> {order.quoted_price ? `₹${order.quoted_price}` : 'Not quoted yet'}</div>
+            <div style={{ marginBottom: 6 }}><b>Notes:</b> {order.notes || '-'}</div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <button onClick={() => handleOrderStatusUpdate(order.id, 'approve')} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: 4, padding: '8px 16px', fontWeight: 600 }}>Approve</button>
+              <button onClick={() => handleOrderStatusUpdate(order.id, 'reject')} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: 4, padding: '8px 16px', fontWeight: 600 }}>Reject</button>
+              <button onClick={() => handleOrderStatusUpdate(order.id, 'quote')} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: 4, padding: '8px 16px', fontWeight: 600 }}>Quote</button>
+            </div>
                   </div>
-                </td>
-                <td>{getStatusBadge(order.status)}</td>
-                <td>{formatDate(order.order_date)}</td>
-                <td>{order.delivery_date ? formatDate(order.delivery_date) : '-'}</td>
-                <td className="amount">${order.total_amount.toFixed(2)}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button 
-                      className="btn-edit"
-                      onClick={() => handleEditOrder(order)}
-                      title="Edit Order"
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                      </svg>
-                    </button>
-                    {order.status === 'confirmed' && (
-                      <button 
-                        className="btn-process"
-                        onClick={() => handleProcessOrder(order.id)}
-                        title="Process Order"
-                      >
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
             ))}
-          </tbody>
-        </table>
       </div>
 
       {/* Create Order Modal */}
@@ -444,6 +467,17 @@ function CreateOrderForm({ customers, products, onSubmit, onCancel }) {
                   </div>
                   
                   <div className="form-group">
+                    <label>Total Price</label>
+                    <input
+                      type="number"
+                      value={(item.quantity * item.unit_price).toFixed(2)}
+                      disabled
+                      className="disabled-input"
+                      style={{ background: '#f8f9fa' }}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
                     <label>Notes</label>
                     <input
                       type="text"
@@ -468,7 +502,7 @@ function CreateOrderForm({ customers, products, onSubmit, onCancel }) {
             ))}
             
             <div className="order-total">
-              <strong>Total Amount: ${calculateTotal().toFixed(2)}</strong>
+              <strong>Total Amount: ₹{calculateTotal().toFixed(2)}</strong>
             </div>
           </div>
 
@@ -489,32 +523,43 @@ function CreateOrderForm({ customers, products, onSubmit, onCancel }) {
 function EditOrderForm({ order, customers, products, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
     status: order.status,
-    delivery_date: order.delivery_date ? order.delivery_date.slice(0, 16) : '',
+    proposed_deadline: order.proposed_deadline ? order.proposed_deadline.slice(0, 16) : '',
+    delivery_address: order.delivery_address || '',
     notes: order.notes || '',
     items: []
   });
   const [loading, setLoading] = useState(true);
+  const [priceBreakdown, setPriceBreakdown] = useState(null);
+  const [breakdownLoading, setBreakdownLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch order items
-    fetch(`http://localhost:5001/orders/${order.id}/items`)
-      .then(res => res.json())
-      .then(data => {
-        setFormData(prev => ({
-          ...prev,
-          items: data.map(item => ({
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            notes: item.notes || ''
-          }))
-        }));
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+    // Fetch order items and price breakdown
+    Promise.all([
+      fetch(`http://localhost:5001/orders/${order.id}/items`),
+      fetch(`http://localhost:5001/orders/${order.id}/price-breakdown`)
+    ])
+    .then(responses => Promise.all(responses.map(res => res.json())))
+    .then(([itemsData, breakdownData]) => {
+      setFormData(prev => ({
+        ...prev,
+        items: itemsData.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          notes: item.notes || ''
+        }))
+      }));
+      setPriceBreakdown(breakdownData);
+      setLoading(false);
+      setBreakdownLoading(false);
+    })
+    .catch(() => {
+      setLoading(false);
+      setBreakdownLoading(false);
+    });
   }, [order.id]);
+
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -585,7 +630,7 @@ function EditOrderForm({ order, customers, products, onSubmit, onCancel }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content order-form">
+      <div className="modal-content order-form" style={{ maxWidth: '900px', maxHeight: '90vh', overflow: 'auto' }}>
         <div className="modal-header">
           <h2>Edit Order: {order.order_number}</h2>
           <button className="close-btn" onClick={onCancel}>×</button>
@@ -618,12 +663,23 @@ function EditOrderForm({ order, customers, products, onSubmit, onCancel }) {
               </div>
               
               <div className="form-group">
-                <label>Delivery Date</label>
+                <label>Proposed Deadline</label>
                 <input
                   type="datetime-local"
-                  name="delivery_date"
-                  value={formData.delivery_date}
+                  name="proposed_deadline"
+                  value={formData.proposed_deadline}
                   onChange={handleChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Delivery Address</label>
+                <textarea
+                  name="delivery_address"
+                  value={formData.delivery_address}
+                  onChange={handleChange}
+                  placeholder="Enter delivery address..."
+                  rows="2"
                 />
               </div>
             </div>
@@ -637,6 +693,179 @@ function EditOrderForm({ order, customers, products, onSubmit, onCancel }) {
                 placeholder="Additional notes for this order..."
               />
             </div>
+          </div>
+
+          {/* Price Breakdown Section */}
+          <div className="form-section">
+            <div className="section-header">
+              <h3>Price Breakdown</h3>
+              {breakdownLoading && (
+                <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                  Loading price breakdown...
+                </div>
+              )}
+            </div>
+            
+            {priceBreakdown && (
+              <div className="price-breakdown-section" style={{
+                background: '#f8f9fa',
+                borderRadius: '8px',
+                padding: '20px',
+                marginTop: '16px'
+              }}>
+                <h4 style={{ marginBottom: '16px', color: '#1d3557' }}>Detailed Price Breakdown</h4>
+                
+                <div className="breakdown-grid" style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '16px',
+                  marginBottom: '20px'
+                }}>
+                  <div className="breakdown-item">
+                    <span className="label">Product Base Price:</span>
+                    <span className="value">₹{priceBreakdown.product_base_price?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  <div className="breakdown-item">
+                    <span className="label">Labor Cost:</span>
+                    <span className="value">₹{priceBreakdown.labor_cost?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  <div className="breakdown-item">
+                    <span className="label">Customization Fee:</span>
+                    <span className="value">₹{priceBreakdown.customization_fee?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  <div className="breakdown-item">
+                    <span className="label">Installation Charge:</span>
+                    <span className="value">₹{priceBreakdown.installation_charge?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  <div className="breakdown-item">
+                    <span className="label">Delivery Fee:</span>
+                    <span className="value">₹{priceBreakdown.delivery_fee?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  <div className="breakdown-item">
+                    <span className="label">Tax Amount (18%):</span>
+                    <span className="value">₹{priceBreakdown.tax_amount?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  {priceBreakdown.total_quantity && (
+                    <div className="breakdown-item">
+                      <span className="label">Total Quantity:</span>
+                      <span className="value">{priceBreakdown.total_quantity}</span>
+                    </div>
+                  )}
+                  
+                  {priceBreakdown.procurement_cost !== undefined && (
+                    <div className="breakdown-item">
+                      <span className="label">Procurement Cost:</span>
+                      <span className="value">₹{priceBreakdown.procurement_cost?.toLocaleString() || '0'}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="total-section" style={{
+                  borderTop: '2px solid #dee2e6',
+                  paddingTop: '16px',
+                  marginTop: '16px'
+                }}>
+                  <div className="total-row" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    color: '#1d3557'
+                  }}>
+                    <span>Total Price:</span>
+                    <span>₹{priceBreakdown.total_price?.toLocaleString() || '0'}</span>
+                  </div>
+                  
+                  {priceBreakdown.profit_margin_percent !== undefined && (
+                    <div className="profit-info" style={{
+                      marginTop: '8px',
+                      fontSize: '14px',
+                      color: '#6c757d'
+                    }}>
+                      <span>Profit Margin: {priceBreakdown.profit_margin_percent}%</span>
+                      <span style={{ marginLeft: '16px' }}>
+                        Net Profit: ₹{priceBreakdown.net_profit_amount?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Order Summary */}
+                  <div className="order-summary" style={{
+                    marginTop: '16px',
+                    padding: '12px',
+                    background: '#e9ecef',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '8px', color: '#495057' }}>
+                      Order Summary
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <span>Order Number: {priceBreakdown.order_number}</span>
+                      <span>Status: {priceBreakdown.order_status}</span>
+                      <span>Total Quantity: {priceBreakdown.total_quantity}</span>
+                      <span>Estimated Hours: {priceBreakdown.estimated_hours}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Materials Breakdown */}
+                {priceBreakdown.materials_breakdown && priceBreakdown.materials_breakdown.length > 0 && (
+                  <div className="materials-breakdown" style={{ marginTop: '20px' }}>
+                    <h5 style={{ marginBottom: '12px', color: '#1d3557' }}>Materials Breakdown</h5>
+                    <div className="materials-list" style={{
+                      background: 'white',
+                      borderRadius: '4px',
+                      padding: '12px'
+                    }}>
+                      {priceBreakdown.materials_breakdown.map((material, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          padding: '4px 0',
+                          borderBottom: index < priceBreakdown.materials_breakdown.length - 1 ? '1px solid #eee' : 'none'
+                        }}>
+                          <span>{material.name} (Qty: {material.quantity})</span>
+                          <span>₹{material.total_cost?.toLocaleString() || '0'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Skills Information */}
+                {priceBreakdown.skills && priceBreakdown.skills.length > 0 && (
+                  <div className="skills-info" style={{ marginTop: '16px' }}>
+                    <h5 style={{ marginBottom: '8px', color: '#1d3557' }}>Required Skills</h5>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {priceBreakdown.skills.map((skill, index) => (
+                        <span key={index} style={{
+                          background: '#e9ecef',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          color: '#495057'
+                        }}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                    {priceBreakdown.estimated_hours && (
+                      <div style={{ marginTop: '8px', fontSize: '14px', color: '#6c757d' }}>
+                        Estimated Hours: {priceBreakdown.estimated_hours}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="form-section">
@@ -693,6 +922,17 @@ function EditOrderForm({ order, customers, products, onSubmit, onCancel }) {
                   </div>
                   
                   <div className="form-group">
+                    <label>Total Price</label>
+                    <input
+                      type="number"
+                      value={(item.quantity * item.unit_price).toFixed(2)}
+                      disabled
+                      className="disabled-input"
+                      style={{ background: '#f8f9fa' }}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
                     <label>Notes</label>
                     <input
                       type="text"
@@ -717,7 +957,7 @@ function EditOrderForm({ order, customers, products, onSubmit, onCancel }) {
             ))}
             
             <div className="order-total">
-              <strong>Total Amount: ${calculateTotal().toFixed(2)}</strong>
+              <strong>Total Amount: ₹{calculateTotal().toFixed(2)}</strong>
             </div>
           </div>
 

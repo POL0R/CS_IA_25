@@ -9,7 +9,7 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
   const [availableMaterials, setAvailableMaterials] = useState([]);
   const [skills, setSkills] = useState([]); // All available skills
   const [selectedSkills, setSelectedSkills] = useState([]); // Selected skills for this product
-  const [estimatedHours, setEstimatedHours] = useState(1);
+  const [estimatedHours, setEstimatedHours] = useState('1');
   const [laborCost, setLaborCost] = useState(0);
   const [skillBreakdown, setSkillBreakdown] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -18,6 +18,18 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [weight, setWeight] = useState(1); // Default arbitrary weight
+  const [phaseType, setPhaseType] = useState("");
+  const [mountType, setMountType] = useState("");
+  const [complianceTags, setComplianceTags] = useState([]);
+  const [features, setFeatures] = useState([]);
+  const [applicationTags, setApplicationTags] = useState([]);
+  const [voltageRating, setVoltageRating] = useState("");
+  const [minLoadKw, setMinLoadKw] = useState("");
+  const [maxLoadKw, setMaxLoadKw] = useState("");
+  const [featuresOptions, setFeaturesOptions] = useState([]);
+  const [complianceOptions, setComplianceOptions] = useState([]);
+  const [applicationTagOptions, setApplicationTagOptions] = useState([]);
+  const [profitMarginPercent, setProfitMarginPercent] = useState(20.0); // Default 20% profit margin
 
   // Expose functions and state to parent component
   useImperativeHandle(ref, () => ({
@@ -45,6 +57,18 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
       .then(res => res.json())
       .then(data => setSkills(data.map(s => ({ label: s.name, value: s.id }))))
       .catch(() => setSkills([]));
+    fetch("http://localhost:5001/features")
+      .then(res => res.json())
+      .then(data => setFeaturesOptions(data.map(f => ({ label: f.name, value: f.name }))))
+      .catch(() => setFeaturesOptions([]));
+    fetch("http://localhost:5001/compliance_tags")
+      .then(res => res.json())
+      .then(data => setComplianceOptions(data.map(c => ({ label: c.name, value: c.name }))))
+      .catch(() => setComplianceOptions([]));
+    fetch("http://localhost:5001/application-tags")
+      .then(res => res.json())
+      .then(data => setApplicationTagOptions(data.map(t => ({ label: t.name, value: t.name }))))
+      .catch(() => setApplicationTagOptions([]));
   }, []);
 
   useEffect(() => {
@@ -134,26 +158,12 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
 
   const handleSkillsChange = (newSelectedSkills) => {
     setSelectedSkills(newSelectedSkills);
-    // Trigger labor cost calculation immediately
-    setTimeout(() => {
-      if (newSelectedSkills && newSelectedSkills.length > 0) {
-        calculateLaborCost();
-      } else {
-        setLaborCost(0);
-        setSkillBreakdown([]);
-      }
-    }, 100);
+    // No setTimeout, calculation will be triggered by useEffect
   };
 
   const handleEstimatedHoursChange = (e) => {
-    const hours = parseFloat(e.target.value) || 1;
-    setEstimatedHours(hours);
-    // Trigger labor cost calculation immediately
-    setTimeout(() => {
-      if (selectedSkills.length > 0) {
-        calculateLaborCost();
-      }
-    }, 100);
+    setEstimatedHours(e.target.value);
+    // No setTimeout, calculation will be triggered by useEffect
   };
 
   const calculateLaborCost = useCallback(async () => {
@@ -166,7 +176,7 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
     try {
       const requestBody = {
         skills: selectedSkills.map(s => s.label),
-        estimated_hours: estimatedHours
+        estimated_hours: parseFloat(estimatedHours) || 1
       };
       
       const response = await fetch('http://localhost:5001/calculate-labor-cost', {
@@ -191,8 +201,13 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
 
   // Calculate labor cost whenever skills or hours change
   useEffect(() => {
+    if (selectedSkills.length > 0 && parseFloat(estimatedHours) > 0) {
     calculateLaborCost();
-  }, [calculateLaborCost]);
+    } else {
+      setLaborCost(0);
+      setSkillBreakdown([]);
+    }
+  }, [selectedSkills, estimatedHours, calculateLaborCost]);
 
   const totalCost = materials.reduce((sum, m) => sum + (m.totalCost || 0), 0) + laborCost;
 
@@ -211,12 +226,21 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
       body: JSON.stringify({
         model_name: model,
         total_cost: totalCost,
+        profit_margin_percent: profitMarginPercent,
         materials_cost: materials.reduce((sum, m) => sum + (m.totalCost || 0), 0),
         labor_cost: laborCost,
         skills: selectedSkills.map(s => s.label), // send skill names (API will create if needed)
         materials: materials.map(m => ({ id: m.value, name: m.label, quantity: m.quantity })), // send id, name, and quantity
         photo_url: imageUrl, // include the uploaded image URL
-        weight: weight // Include weight
+        weight: weight, // Include weight
+        phase_type: phaseType,
+        mount_type: mountType,
+        compliance_tags: complianceTags,
+        features: features,
+        application_tags: applicationTags,
+        voltage_rating: voltageRating ? parseInt(voltageRating) : null,
+        min_load_kw: minLoadKw ? parseInt(minLoadKw) : null,
+        max_load_kw: maxLoadKw ? parseInt(maxLoadKw) : null
       })
     })
       .then(async res => {
@@ -227,7 +251,7 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
           setModel("");
           setMaterials([]);
           setSelectedSkills([]);
-          setEstimatedHours(1);
+          setEstimatedHours('1');
           setLaborCost(0);
           setSkillBreakdown([]);
           setSelectedImage(null);
@@ -400,6 +424,23 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
           required
         />
       </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Profit Margin (%)</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="0.1"
+          value={profitMarginPercent}
+          onChange={e => setProfitMarginPercent(parseFloat(e.target.value) || 0)}
+          placeholder="Enter profit margin percentage"
+          style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 16 }}
+        />
+        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+          This percentage will be added to your total cost to calculate the selling price
+        </div>
+      </div>
       
       {selectedSkills.length > 0 && (
         <div style={{ marginBottom: 24 }}>
@@ -413,7 +454,7 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
               <div style={{ fontSize: 14, color: '#6b7280' }}>
                 {skillBreakdown.map((skill, index) => (
                   <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span>{skill.skill} (${skill.avg_hourly_rate}/hr × {estimatedHours}hrs)</span>
+                    <span>{skill.skill} (${skill.avg_hourly_rate}/hr × {parseFloat(estimatedHours) || 1}hrs)</span>
                     <span>${skill.skill_cost.toFixed(2)}</span>
                   </div>
                 ))}
@@ -466,6 +507,105 @@ const AddProducts = forwardRef(({ onProductAdded, onCancel, onValidityChange }, 
         )}
         <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: 8 }}>
           Total Cost: <span style={{ color: '#6366f1' }}>${totalCost.toFixed(2)}</span>
+        </div>
+        <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600, color: '#059669' }}>
+          Selling Price: <span style={{ color: '#059669' }}>${(totalCost * (1 + profitMarginPercent / 100)).toFixed(2)}</span>
+          <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>
+            (includes {profitMarginPercent}% profit margin)
+          </span>
+        </div>
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Phase Type</label>
+        <select value={phaseType} onChange={e => setPhaseType(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 16 }}>
+          <option value="">Select phase type</option>
+          <option value="Single">Single</option>
+          <option value="3-phase">3-phase</option>
+        </select>
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Mount Type</label>
+        <select value={mountType} onChange={e => setMountType(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 16 }}>
+          <option value="">Select mount type</option>
+          <option value="Indoor">Indoor</option>
+          <option value="Outdoor">Outdoor</option>
+        </select>
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Compliance Tags</label>
+        <Select
+          isMulti
+          isClearable
+          isSearchable
+          placeholder="Add or select compliance tags..."
+          value={complianceTags.map(tag => ({ label: tag, value: tag }))}
+          onChange={selected => setComplianceTags(selected ? selected.map(opt => opt.value) : [])}
+          options={complianceOptions}
+          formatCreateLabel={inputValue => `Add: "${inputValue}"`}
+          styles={{ menu: base => ({ ...base, zIndex: 9999 }) }}
+        />
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Features</label>
+        <Select
+          isMulti
+          isClearable
+          isSearchable
+          placeholder="Add or select features..."
+          value={features.map(tag => ({ label: tag, value: tag }))}
+          onChange={selected => setFeatures(selected ? selected.map(opt => opt.value) : [])}
+          options={featuresOptions}
+          formatCreateLabel={inputValue => `Add: "${inputValue}"`}
+          styles={{ menu: base => ({ ...base, zIndex: 9999 }) }}
+        />
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Application Tags</label>
+        <Select
+          isMulti
+          isClearable
+          isSearchable
+          placeholder="Add or select application tags..."
+          value={applicationTags.map(tag => ({ label: tag, value: tag }))}
+          onChange={selected => setApplicationTags(selected ? selected.map(opt => opt.value) : [])}
+          options={applicationTagOptions}
+          formatCreateLabel={inputValue => `Add: "${inputValue}"`}
+          styles={{ menu: base => ({ ...base, zIndex: 9999 }) }}
+        />
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Voltage Rating (V)</label>
+        <input
+          type="number"
+          min="0"
+          value={voltageRating}
+          onChange={e => setVoltageRating(e.target.value)}
+          placeholder="Enter voltage rating"
+          style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 16 }}
+        />
+      </div>
+      <div style={{ marginBottom: 24, display: 'flex', gap: 16 }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Min Load (kW)</label>
+          <input
+            type="number"
+            min="0"
+            value={minLoadKw}
+            onChange={e => setMinLoadKw(e.target.value)}
+            placeholder="Min kW"
+            style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 16 }}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Max Load (kW)</label>
+          <input
+            type="number"
+            min="0"
+            value={maxLoadKw}
+            onChange={e => setMaxLoadKw(e.target.value)}
+            placeholder="Max kW"
+            style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 16 }}
+          />
         </div>
       </div>
     </div>

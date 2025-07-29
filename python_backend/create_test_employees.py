@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base, User, Employee, Skill, UserRole
 from db_init import get_engine
 from datetime import datetime
+import bcrypt
 
 def create_test_employees():
     # Database connection
@@ -152,10 +153,11 @@ def create_test_employees():
                 continue
             
             # Create user
+            password_hash = bcrypt.hashpw(emp_data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             user = User(
                 username=emp_data["username"],
                 email=emp_data["email"],
-                password_hash=emp_data["password"],  # In production, this should be hashed
+                password_hash=password_hash,
                 role=UserRole.employee,
                 last_login=None
             )

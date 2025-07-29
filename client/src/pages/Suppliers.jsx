@@ -18,6 +18,8 @@ export default function Suppliers() {
   const [performance, setPerformance] = useState(null);
   const [perfLoading, setPerfLoading] = useState(true);
   const [perfError, setPerfError] = useState(null);
+  const [materialsBySupplier, setMaterialsBySupplier] = useState({});
+  const [showMaterialsFor, setShowMaterialsFor] = useState(null);
   const user = JSON.parse(localStorage.getItem("user"));
   const isAdmin = user && user.role === 'admin';
 
@@ -124,6 +126,19 @@ export default function Suppliers() {
         else alert('Error: ' + (data.error || 'Failed to ban supplier'));
       })
       .catch(() => alert('Error: Could not ban supplier'));
+  };
+
+  const handleViewMaterials = (supplierId) => {
+    if (materialsBySupplier[supplierId]) {
+      setShowMaterialsFor(supplierId === showMaterialsFor ? null : supplierId);
+      return;
+    }
+    fetch(`http://localhost:5001/supplier-products/${supplierId}`)
+      .then(res => res.json())
+      .then(data => {
+        setMaterialsBySupplier(prev => ({ ...prev, [supplierId]: data }));
+        setShowMaterialsFor(supplierId);
+      });
   };
 
   const filteredSuppliers = suppliers.filter(supplier => {
@@ -244,6 +259,29 @@ export default function Suppliers() {
                 Created: {formatDate(supplier.created_at)}
               </span>
             </div>
+            <button
+              className="btn-admin-action"
+              style={{ color: '#2563eb', fontWeight: 600, marginTop: 8 }}
+              onClick={() => handleViewMaterials(supplier.id)}
+            >
+              {showMaterialsFor === supplier.id ? 'Hide Materials' : 'View Materials'}
+            </button>
+            {showMaterialsFor === supplier.id && (
+              <div style={{ marginTop: 12, background: '#f7fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: 0, marginBottom: 8, color: '#222' }}>Supplied Materials</h4>
+                {materialsBySupplier[supplier.id] && materialsBySupplier[supplier.id].length > 0 ? (
+                  <ul style={{ paddingLeft: 18, margin: 0 }}>
+                    {materialsBySupplier[supplier.id].map(mat => (
+                      <li key={mat.product_id} style={{ marginBottom: 6 }}>
+                        <b>{mat.product_name}</b> ({mat.product_category || 'Uncategorized'}) — Price: <b>{mat.unit_price}</b> per {mat.product_unit}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div style={{ color: '#888', fontStyle: 'italic' }}>No materials found for this supplier.</div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

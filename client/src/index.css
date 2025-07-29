@@ -73,3 +73,34 @@ input:focus, textarea:focus, select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
+
+/* Enforce global dark mode */
+body {
+  background: #111 !important;
+  color: #fff !important;
+}
+table, th, td {
+  background: #181818 !important;
+  color: #fff !important;
+  border-color: #222 !important;
+}
+thead, th {
+  background: #222 !important;
+  color: #fff !important;
+}
+tr {
+  background: #181818 !important;
+}
+tr:hover {
+  background: #222 !important;
+}
+/* Remove any white backgrounds from buttons, inputs, etc. */
+button, input, select, textarea {
+  background: #181818 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+/* Remove box-shadows that may look like white borders */
+* {
+  box-shadow: none !important;
+}
